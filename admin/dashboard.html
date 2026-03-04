@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VITARED | Panel Administrativo</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../public/css/public.css">
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="admin-body">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <img src="../public/images/vitared_logo.png" alt="VITARED">
+        <h3>Admin Panel</h3>
+    </div>
+    <div class="sidebar-nav">
+        <ul>
+            <li><a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="usuarios.html"><i class="fas fa-users"></i> Usuarios</a></li>
+            <li><a href="campanas-admin.html"><i class="fas fa-calendar-alt"></i> Campañas</a></li>
+            <li><a href="perfil.html"><i class="fas fa-user"></i> Mi Perfil</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <div class="top-bar">
+        <h2>Dashboard</h2>
+        <div class="user-info" id="userInfo">
+            <span id="userName">Cargando...</span>
+            <div class="user-avatar" id="userAvatar">A</div>
+        </div>
+    </div>
+
+    <!-- ESTADÍSTICAS -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5>Usuarios</h5>
+                    <h2 id="totalUsuarios">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>Campañas</h5>
+                    <h2 id="totalCampanas">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>Donaciones</h5>
+                    <h2 id="totalDonaciones">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5>Citas Hoy</h5>
+                    <h2 id="citasHoy">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REGISTRAR DONACIÓN (RF5) -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">Registrar Nueva Donación</h5>
+        </div>
+        <div class="card-body">
+            <div id="donacionAlert" class="alert" style="display: none;"></div>
+            
+            <form id="donacionForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Usuario</label>
+                        <select id="donacionUsuario" class="form-select" required>
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Centro</label>
+                        <select id="donacionCentro" class="form-select" required>
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Cantidad (ml)</label>
+                        <input type="text" id="donacionCantidad" class="form-control" value="450">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Atendido por</label>
+                        <input type="text" id="donacionAtendidoPor" class="form-control">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Tipo Sangre</label>
+                        <input type="text" id="donacionTipoSangre" class="form-control" readonly>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-danger">Registrar Donación</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ÚLTIMAS DONACIONES -->
+    <div class="card shadow">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">Últimas Donaciones</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Usuario</th>
+                            <th>Centro</th>
+                            <th>Cantidad</th>
+                            <th>Comprobante</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaDonaciones">
+                        <tr><td colspan="5" class="text-center">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<script src="../public/js/firebase-config.js"></script>
+<script>
+    let currentUser = null;
+    let currentUserData = null;
+
+    // Verificar admin
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = '../login/login.html';
+            return;
+        }
+        
+        currentUser = user;
+        const rol = await verificarRolUsuario(user.uid);
+        
+        if (!rol.esAdmin) {
+            window.location.href = '../index.html?error=unauthorized';
+            return;
+        }
+        
+        currentUserData = rol.datos;
+        document.getElementById('userName').textContent = user.displayName || 'Admin';
+        document.getElementById('userAvatar').textContent = (user.displayName || 'A').charAt(0).toUpperCase();
+        
+        cargarDashboard();
+    });
+
+    async function cargarDashboard() {
+        await cargarSelectores();
+        await cargarEstadisticas();
+        await cargarDonaciones();
+        
+        document.getElementById('donacionUsuario').addEventListener('change', async (e) => {
+            const userId = e.target.value;
+            if (!userId) return;
+            
+            const userDoc = await db.collection('users').doc(userId).get();
+            const userData = userDoc.data();
+            document.getElementById('donacionTipoSangre').value = userData.tipoSangre || '';
+        });
+    }
+
+    async function cargarSelectores() {
+        // Usuarios
+        const usersSnap = await db.collection('users').where('esAdmin', '==', false).get();
+        const userSelect = document.getElementById('donacionUsuario');
+        userSelect.innerHTML = '<option value="">Seleccione...</option>';
+        
+        usersSnap.forEach(doc => {
+            const user = doc.data();
+            const option = document.createElement('option');
+            option.value = doc.id;
+            option.textContent = `${user.nombre} - ${user.tipoSangre || '?'}`;
+            userSelect.appendChild(option);
+        });
+
+        // Centros
+        const centrosSnap = await db.collection('centros').get();
+        const centroSelect = document.getElementById('donacionCentro');
+        centroSelect.innerHTML = '<option value="">Seleccione...</option>';
+        
+        if (centrosSnap.empty) {
+            // Centros por defecto
+            const centrosDefault = [
+                { id: 'hospital-general', nombre: 'Hospital General', direccion: 'Av. Universidad 101' },
+                { id: 'centro-salud', nombre: 'Centro de Salud La Paz', direccion: 'Blvd. Arrieta 234' }
+            ];
+            
+            centrosDefault.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.id;
+                option.textContent = c.nombre;
+                centroSelect.appendChild(option);
+            });
+        } else {
+            centrosSnap.forEach(doc => {
+                const centro = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = centro.nombre;
+                centroSelect.appendChild(option);
+            });
+        }
+    }
+
+    async function cargarEstadisticas() {
+        const usersSnap = await db.collection('users').get();
+        document.getElementById('totalUsuarios').textContent = usersSnap.size;
+
+        const campanasSnap = await db.collection('campanas').get();
+        document.getElementById('totalCampanas').textContent = campanasSnap.size;
+
+        const donacionesSnap = await db.collection('donaciones').get();
+        document.getElementById('totalDonaciones').textContent = donacionesSnap.size;
+
+        const hoy = new Date();
+        hoy.setHours(0,0,0,0);
+        const manana = new Date(hoy);
+        manana.setDate(manana.getDate() + 1);
+
+        const citasSnap = await db.collection('citas')
+            .where('fecha', '>=', hoy)
+            .where('fecha', '<', manana)
+            .get();
+        document.getElementById('citasHoy').textContent = citasSnap.size;
+    }
+
+    async function cargarDonaciones() {
+        const snapshot = await db.collection('donaciones')
+            .orderBy('fecha', 'desc')
+            .limit(10)
+            .get();
+        
+        const tbody = document.getElementById('tablaDonaciones');
+        if (snapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">No hay donaciones registradas</td></tr>';
+            return;
+        }
+
+        let html = '';
+        for (const doc of snapshot.docs) {
+            const d = doc.data();
+            const userDoc = await db.collection('users').doc(d.userId).get();
+            const user = userDoc.data();
+            
+            let centroNombre = d.centroId;
+            if (d.centroId && d.centroId.length > 20) { // Es un ID de Firestore
+                const centroDoc = await db.collection('centros').doc(d.centroId).get();
+                if (centroDoc.exists) centroNombre = centroDoc.data().nombre;
+            }
+            
+            const fecha = d.fecha?.toDate ? d.fecha.toDate().toLocaleDateString() : new Date().toLocaleDateString();
+            
+            html += `
+                <tr>
+                    <td>${fecha}</td>
+                    <td>${user?.nombre || '?'}</td>
+                    <td>${centroNombre}</td>
+                    <td>${d.cantidad || '450ml'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="verComprobante('${doc.id}')">
+                            <i class="fas fa-file-pdf"></i> Ver
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+        tbody.innerHTML = html;
+    }
+
+    document.getElementById('donacionForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const datos = {
+            userId: document.getElementById('donacionUsuario').value,
+            centroId: document.getElementById('donacionCentro').value,
+            cantidad: document.getElementById('donacionCantidad').value,
+            atendidoPor: document.getElementById('donacionAtendidoPor').value || 'Admin',
+            tipoSangre: document.getElementById('donacionTipoSangre').value
+        };
+        
+        if (!datos.userId || !datos.centroId) {
+            alert('Selecciona usuario y centro');
+            return;
+        }
+        
+        const resultado = await registrarDonacion(datos);
+        
+        const alertDiv = document.getElementById('donacionAlert');
+        alertDiv.style.display = 'block';
+        
+        if (resultado.success) {
+            alertDiv.className = 'alert alert-success';
+            alertDiv.textContent = `✅ Donación registrada. Comprobante: ${resultado.comprobanteUrl}`;
+            cargarDonaciones();
+            cargarEstadisticas();
+            
+            // Limpiar selección
+            document.getElementById('donacionUsuario').value = '';
+            document.getElementById('donacionCentro').value = '';
+            document.getElementById('donacionTipoSangre').value = '';
+        } else {
+            alertDiv.className = 'alert alert-danger';
+            alertDiv.textContent = '❌ Error: ' + resultado.error;
+        }
+    });
+
+    window.verComprobante = async (donacionId) => {
+        const comprobante = await db.collection('comprobantes').doc(donacionId).get();
+        if (comprobante.exists) {
+            const data = comprobante.data();
+            alert(`🧾 COMPROBANTE DE DONACIÓN\n\nFolio: ${data.folio}\nDonante: ${data.donante}\nFecha: ${data.fecha}\nCentro: ${data.centro}\nCantidad: ${data.cantidad}`);
+        } else {
+            alert('Comprobante no disponible');
+        }
+    };
+
+    window.logout = () => {
+        auth.signOut();
+        window.location.href = '../index.html';
+    };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+/* ========================================
+   CSS PARA PÁGINAS DE LOGIN/REGISTRO
+   ======================================== */
+
+:root {
+    --primary: #8B0000;
+    --primary-dark: #b30000;
+    --primary-gradient: linear-gradient(135deg, #8B0000, #b30000);
+    --dark: #1F1C18;
+    --light: #f8f9fa;
+    --white: #ffffff;
+    --shadow-card: 0 25px 70px rgba(0,0,0,0.35);
+}
+
+/* Fondo con estilo médico */
+.login-section, .register-section {
+    min-height: 92vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 0;
+    background: linear-gradient(135deg, #8E0E00, #1F1C18);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Círculos decorativos */
+.login-section::before, .register-section::before {
+    content: "";
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+    top: -100px;
+    right: -100px;
+    z-index: 1;
+}
+
+.login-section::after, .register-section::after {
+    content: "";
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+    bottom: -80px;
+    left: -80px;
+    z-index: 1;
+}
+
+/* Card principal */
+.login-card, .register-card {
+    border: none;
+    border-radius: 30px;
+    background: #e2e2e2;
+    padding: 55px;
+    box-shadow: var(--shadow-card);
+    transition: 0.4s ease;
+    position: relative;
+    z-index: 10;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.register-card {
+    max-width: 900px;
+}
+
+.login-card:hover, .register-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+}
+
+/* Encabezado */
+.login-header, .register-header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.login-header h2, .register-header h2 {
+    font-weight: 800;
+    color: var(--primary);
+    font-size: 2rem;
+}
+
+.login-header p, .register-header p {
+    color: #777;
+    font-size: 1.1rem;
+}
+
+/* Formularios */
+.form-label {
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control, .form-select {
+    border-radius: 30px;
+    padding: 14px 22px;
+    border: 1px solid #ddd;
+    transition: 0.3s ease;
+    width: 100%;
+    font-size: 1rem;
+    box-sizing: border-box;
+    background: white;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(142,14,0,.25);
+    outline: none;
+}
+
+/* Botones */
+.login-btn, .register-btn {
+    border-radius: 35px;
+    padding: 14px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #8E0E00, #C31432);
+    border: none;
+    transition: 0.3s ease;
+    letter-spacing: 1px;
+    color: white;
+    width: 100%;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.login-btn:hover:not(:disabled), .register-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.login-btn:disabled, .register-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Links */
+.link-medical {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.link-medical:hover {
+    text-decoration: underline;
+}
+
+/* Checkbox */
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.form-check-input {
+    width: 1.2rem;
+    height: 1.2rem;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+/* Grid para registro */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px;
+}
+
+.col-md-6 {
+    width: 50%;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.col-12 {
+    width: 100%;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem;
+}
+
+/* Alertas */
+.alert {
+    padding: 1rem;
+    border-radius: 30px;
+    margin-bottom: 1.5rem;
+    border: none;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border-left: 5px solid #28a745;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left: 5px solid #dc3545;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border-left: 5px solid #17a2b8;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .register-card {
+        padding: 40px;
+        margin: 0 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .login-card, .register-card {
+        padding: 30px;
+        margin: 0 15px;
+    }
+    
+    .col-md-6 {
+        width: 100%;
+    }
+    
+    .login-section, .register-section {
+        padding: 40px 0;
+    }
+}

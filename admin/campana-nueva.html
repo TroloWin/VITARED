@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VITARED | Nueva Campaña</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../public/css/public.css">
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="admin-body">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <img src="../public/images/vitared_logo.png" alt="VITARED">
+        <h3>Admin Panel</h3>
+    </div>
+    <div class="sidebar-nav">
+        <ul>
+            <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="usuarios.html"><i class="fas fa-users"></i> Usuarios</a></li>
+            <li><a href="campanas-admin.html"><i class="fas fa-calendar-alt"></i> Campañas</a></li>
+            <li><a href="perfil.html"><i class="fas fa-user"></i> Mi Perfil</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <div class="top-bar">
+        <h2>Nueva Campaña</h2>
+        <div class="user-info" id="userInfo">
+            <span id="userName">Cargando...</span>
+            <div class="user-avatar" id="userAvatar">A</div>
+        </div>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div class="card shadow">
+        <div class="card-body">
+            <div id="errorAlert" class="alert alert-danger" style="display: none;"></div>
+            
+            <form id="campanaForm">
+                <div class="mb-3">
+                    <label class="form-label">Título *</label>
+                    <input type="text" id="titulo" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descripción *</label>
+                    <textarea id="descripcion" class="form-control" rows="4" required></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Ubicación *</label>
+                        <input type="text" id="ubicacion" class="form-control" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Fecha *</label>
+                        <input type="date" id="fecha" class="form-control" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Hora</label>
+                        <input type="time" id="hora" class="form-control">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Cupo Máximo</label>
+                        <input type="number" id="cupo" class="form-control" value="50">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Imagen (nombre archivo)</label>
+                        <input type="text" id="imagen" class="form-control" placeholder="ej: campana1.jpg">
+                    </div>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input type="checkbox" id="activa" class="form-check-input" checked>
+                    <label class="form-check-label" for="activa">
+                        Activa (visible para usuarios)
+                    </label>
+                </div>
+
+                <!-- NUEVO CAMPO: DESTACADA -->
+                <div class="form-check mb-4">
+                    <input type="checkbox" id="destacada" class="form-check-input">
+                    <label class="form-check-label" for="destacada">
+                        ⭐ Mostrar en página principal (destacada)
+                    </label>
+                    <small class="text-muted d-block">Máximo 3 campañas destacadas aparecerán en el index</small>
+                </div>
+
+                <button type="submit" class="btn btn-danger px-5">
+                    <i class="fas fa-save me-2"></i>Guardar Campaña
+                </button>
+                <a href="campanas-admin.html" class="btn btn-outline-secondary ms-2 px-5">
+                    Cancelar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<script src="../public/js/firebase-config.js"></script>
+<script>
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = '../login/login.html';
+            return;
+        }
+        
+        const rol = await verificarRolUsuario(user.uid);
+        if (!rol.esAdmin) {
+            window.location.href = '../index.html?error=unauthorized';
+            return;
+        }
+        
+        document.getElementById('userName').textContent = user.displayName || 'Admin';
+        document.getElementById('userAvatar').textContent = (user.displayName || 'A').charAt(0).toUpperCase();
+    });
+
+    document.getElementById('campanaForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const datos = {
+            titulo: document.getElementById('titulo').value,
+            descripcion: document.getElementById('descripcion').value,
+            ubicacion: document.getElementById('ubicacion').value,
+            fecha: document.getElementById('fecha').value,
+            hora: document.getElementById('hora').value,
+            cupoMaximo: parseInt(document.getElementById('cupo').value) || 50,
+            imagen: document.getElementById('imagen').value || 'campana-default.jpg',
+            activa: document.getElementById('activa').checked,
+            destacada: document.getElementById('destacada').checked  // NUEVO CAMPO
+        };
+        
+        if (!datos.titulo || !datos.descripcion || !datos.ubicacion || !datos.fecha) {
+            alert('Completa todos los campos requeridos');
+            return;
+        }
+        
+        const resultado = await crearCampana(datos);
+        
+        if (resultado.success) {
+            window.location.href = 'campanas-admin.html?success=creada';
+        } else {
+            const alertDiv = document.getElementById('errorAlert');
+            alertDiv.textContent = '❌ Error: ' + resultado.error;
+            alertDiv.style.display = 'block';
+        }
+    });
+
+    window.logout = () => {
+        auth.signOut();
+        window.location.href = '../index.html';
+    };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

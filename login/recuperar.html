@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VITARED | Recuperar Contraseña</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../public/css/public.css">
+    <link rel="stylesheet" href="css/login.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="../index.html">
+            <img src="../public/images/vitared_logo.png" alt="VITARED" style="width: 140px;">
+        </a>
+    </div>
+</nav>
+
+<section class="login-section">
+    <div class="col-md-5">
+        <div class="login-card">
+            <div class="login-header">
+                <h2>Recuperar Contraseña</h2>
+                <p>Te enviaremos un correo para restablecer tu contraseña</p>
+            </div>
+
+            <div id="successAlert" class="alert alert-success" style="display: none;"></div>
+            <div id="errorAlert" class="alert alert-danger" style="display: none;"></div>
+            <div id="loadingAlert" class="alert alert-info" style="display: none;">Enviando correo...</div>
+
+            <form id="recoverForm">
+                <div class="mb-4">
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" id="email" class="form-control" placeholder="tucorreo@ejemplo.com" required>
+                </div>
+
+                <div class="d-grid mb-3">
+                    <button type="submit" class="login-btn" id="submitBtn">
+                        Enviar correo de recuperación
+                    </button>
+                </div>
+
+                <div class="text-center mt-3">
+                    <a href="login.html" class="link-medical">← Volver al inicio de sesión</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<footer>
+    © 2025 Donación de Sangre | Proyecto VITARED
+</footer>
+
+<script src="../public/js/firebase-config.js"></script>
+<script>
+    document.getElementById('recoverForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingAlert = document.getElementById('loadingAlert');
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        
+        // Mostrar loading
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enviando...';
+        loadingAlert.style.display = 'block';
+        successAlert.style.display = 'none';
+        errorAlert.style.display = 'none';
+        
+        try {
+            await auth.sendPasswordResetEmail(email);
+            
+            successAlert.textContent = '✅ ¡Correo enviado! Revisa tu bandeja de entrada (incluye spam)';
+            successAlert.style.display = 'block';
+            
+            // Limpiar campo
+            document.getElementById('email').value = '';
+            
+        } catch (error) {
+            console.error("Error en recuperación:", error);
+            
+            let errorMessage = '';
+            switch(error.code) {
+                case 'auth/user-not-found':
+                    errorMessage = 'No existe una cuenta con este correo';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Correo electrónico no válido';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = 'Demasiados intentos. Intenta más tarde';
+                    break;
+                default:
+                    errorMessage = 'Error al enviar: ' + error.message;
+            }
+            
+            errorAlert.textContent = errorMessage;
+            errorAlert.style.display = 'block';
+        } finally {
+            loadingAlert.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Enviar correo de recuperación';
+        }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

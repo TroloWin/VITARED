@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VITARED | Administrar Campañas</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../public/css/public.css">
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="admin-body">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <img src="../public/images/vitared_logo.png" alt="VITARED">
+        <h3>Admin Panel</h3>
+    </div>
+    <div class="sidebar-nav">
+        <ul>
+            <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="usuarios.html"><i class="fas fa-users"></i> Usuarios</a></li>
+            <li><a href="campanas-admin.html" class="active"><i class="fas fa-calendar-alt"></i> Campañas</a></li>
+            <li><a href="perfil.html"><i class="fas fa-user"></i> Mi Perfil</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <h2>Administrar Campañas</h2>
+            <a href="campana-nueva.html" class="btn btn-danger">
+                <i class="fas fa-plus"></i> Nueva Campaña
+            </a>
+        </div>
+        <div class="user-info" id="userInfo">
+            <span id="userName">Cargando...</span>
+            <div class="user-avatar" id="userAvatar">A</div>
+        </div>
+    </div>
+
+    <!-- TABLA DE CAMPAÑAS -->
+    <div class="card shadow">
+        <div class="card-body">
+            <div id="alert" class="alert" style="display: none;"></div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Fecha</th>
+                            <th>Ubicación</th>
+                            <th class="text-center">⭐ Destacada</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCampanas">
+                        <tr><td colspan="7" class="text-center">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<script src="../public/js/firebase-config.js"></script>
+<script>
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = '../login/login.html';
+            return;
+        }
+        
+        const rol = await verificarRolUsuario(user.uid);
+        if (!rol.esAdmin) {
+            window.location.href = '../index.html?error=unauthorized';
+            return;
+        }
+        
+        document.getElementById('userName').textContent = user.displayName || 'Admin';
+        document.getElementById('userAvatar').textContent = (user.displayName || 'A').charAt(0).toUpperCase();
+        
+        cargarCampanas();
+    });
+
+    async function cargarCampanas() {
+        const snapshot = await db.collection('campanas').orderBy('fecha', 'desc').get();
+        const tbody = document.getElementById('tablaCampanas');
+        
+        if (snapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay campañas. <a href="campana-nueva.html">Crear primera campaña</a></td></tr>';
+            return;
+        }
+
+        let html = '';
+        snapshot.forEach(doc => {
+            const c = doc.data();
+            const fecha = c.fecha?.toDate ? c.fecha.toDate().toLocaleDateString() : 'Pendiente';
+            
+            html += `
+                <tr>
+                    <td><strong>${c.titulo}</strong></td>
+                    <td>${fecha} ${c.hora || ''}</td>
+                    <td>${c.ubicacion}</td>
+                    <td class="text-center">
+                        ${c.destacada ? 
+                            '<span class="badge bg-warning text-dark">⭐ Sí</span>' : 
+                            '<span class="badge bg-secondary">No</span>'
+                        }
+                    </td>
+                    <td>
+                        <span class="badge ${c.activa ? 'bg-success' : 'bg-secondary'}">
+                            ${c.activa ? 'Activa' : 'Inactiva'}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="campana-editar.html?id=${doc.id}" class="btn btn-sm btn-outline-primary" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button onclick="eliminarCampana('${doc.id}')" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    window.eliminarCampana = async (id) => {
+        if (!confirm('¿Eliminar esta campaña? Esta acción no se puede deshacer.')) return;
+        
+        const resultado = await eliminarCampana(id);
+        
+        const alertDiv = document.getElementById('alert');
+        alertDiv.style.display = 'block';
+        
+        if (resultado.success) {
+            alertDiv.className = 'alert alert-success';
+            alertDiv.textContent = '✅ Campaña eliminada correctamente';
+            cargarCampanas();
+            setTimeout(() => alertDiv.style.display = 'none', 3000);
+        } else {
+            alertDiv.className = 'alert alert-danger';
+            alertDiv.textContent = '❌ Error: ' + resultado.error;
+        }
+    };
+
+    window.logout = () => {
+        auth.signOut();
+        window.location.href = '../index.html';
+    };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
