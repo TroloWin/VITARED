@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VITARED | Donación de Sangre</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="public/css/public.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg shadow-sm sticky-top">
+    <div class="container py-2">
+        <a class="navbar-brand" href="index.html">
+            <img src="public/images/vitared_logo.png" alt="VITARED" style="width: 140px;">
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom" href="#informacion">Información General</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom" href="requisitos.html">Requisitos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom" href="preguntas.html">Preguntas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom" href="campanas.html">Campañas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom" href="centros.html">Centros</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center" id="authButtons">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO PRINCIPAL -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold">Dona Sangre, Salva Vidas</h1>
+        <p class="lead mb-4">
+            Tu donación puede marcar la diferencia. Únete y sé un héroe hoy.
+        </p>
+        <a href="login/register.html" class="btn btn-danger btn-lg px-5 shadow hero-btn" id="heroButton">
+            Quiero Donar
+        </a>
+    </div>
+</section>
+
+<!-- SECCIÓN INFORMACIÓN -->
+<section class="py-5 bg-light" id="informacion">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5 section-title">Información sobre la Donación</h2>
+
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="card custom-card h-100">
+                    <img src="public/images/Dato1.jpg" class="card-img-top" alt="Donación">
+                    <div class="card-body">
+                        <h5 class="card-title">¿Qué es la Donación de Sangre?</h5>
+                        <p class="card-text">
+                            Es un acto solidario y voluntario que ayuda a salvar vidas 
+                            mediante la transfusión a pacientes que lo necesitan.
+                        </p>
+                        <a href="#" class="btn btn-outline-danger btn-sm custom-btn">Leer más</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card custom-card h-100">
+                    <img src="public/images/Dato2.jpg" class="card-img-top" alt="Componentes">
+                    <div class="card-body">
+                        <h5 class="card-title">Componentes de la Sangre</h5>
+                        <ul class="card-text">
+                            <li>Glóbulos rojos</li>
+                            <li>Glóbulos blancos</li>
+                            <li>Plasma</li>
+                            <li>Plaquetas</li>
+                        </ul>
+                        <a href="#" class="btn btn-outline-danger btn-sm custom-btn">Ver detalles</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card custom-card h-100">
+                    <img src="public/images/Dato3.jpg" class="card-img-top" alt="Tipos">
+                    <div class="card-body">
+                        <h5 class="card-title">Tipos de Sangre</h5>
+                        <ul class="card-text">
+                            <li>Grupo A</li>
+                            <li>Grupo B</li>
+                            <li>Grupo AB</li>
+                            <li>Grupo O</li>
+                        </ul>
+                        <a href="#" class="btn btn-outline-danger btn-sm custom-btn">Más información</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CAMPAÑAS DESTACADAS (SOLO LAS QUE EL ADMIN MARQUE) -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center fw-bold text-danger mb-5">Campañas Destacadas</h2>
+        <div id="campanasDestacadas" class="row">
+            <div class="col-12 text-center">
+                <div class="spinner-border text-danger" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="campanas.html" class="btn btn-outline-danger btn-lg px-5">Ver todas las campañas</a>
+        </div>
+    </div>
+</section>
+
+<!-- LLAMADO A LA ACCIÓN -->
+<section class="cta-section text-white text-center py-5">
+    <div class="container">
+        <h2 class="fw-bold mb-3">Haz la Diferencia Hoy</h2>
+        <p class="mb-4">Cada gota cuenta. Regístrate y conviértete en donador.</p>
+        <a href="login/register.html" class="btn btn-light btn-lg px-4 cta-btn">Registrarme</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    © 2025 Donación de Sangre | Proyecto VITARED
+</footer>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<script src="public/js/firebase-config.js"></script>
+<script>
+    // Cargar campañas destacadas
+    async function cargarCampanasDestacadas() {
+        const container = document.getElementById('campanasDestacadas');
+        if (!container) return;
+        
+        try {
+            const campanas = await obtenerCampanasDestacadas();
+            console.log("Campañas destacadas cargadas:", campanas);
+            
+            if (!campanas || campanas.length === 0) {
+                container.innerHTML = '<p class="text-center">No hay campañas destacadas en este momento</p>';
+                return;
+            }
+            
+            let html = '';
+            campanas.forEach(c => {
+                let fecha = 'Próximamente';
+                if (c.fecha && c.fecha.toDate) {
+                    fecha = c.fecha.toDate().toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                }
+                
+                html += `
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow h-100 campaign-card">
+                            <img src="public/images/${c.imagen || 'campana-default.jpg'}" class="card-img-top" alt="${c.titulo}" style="height: 200px; object-fit: cover;">
+                            <div class="card-body">
+                                <h5 class="text-danger fw-bold">${c.titulo || 'Sin título'}</h5>
+                                <p>${c.descripcion ? c.descripcion.substring(0, 100) + '...' : 'Sin descripción'}</p>
+                                <p><strong>📅 ${fecha}</strong></p>
+                                <p><strong>📍 ${c.ubicacion || 'Por definir'}</strong></p>
+                                <a href="campanas.html" class="btn btn-outline-danger btn-sm">Ver detalles</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        } catch (error) {
+            console.error("Error cargando campañas destacadas:", error);
+            container.innerHTML = '<p class="text-center text-danger">Error al cargar campañas</p>';
+        }
+    }
+
+    // Control de autenticación en navbar
+    auth.onAuthStateChanged(async (user) => {
+        const authDiv = document.getElementById('authButtons');
+        const heroButton = document.getElementById('heroButton');
+        
+        if (user) {
+            const rol = await verificarRolUsuario(user.uid);
+            
+            if (rol.esAdmin) {
+                authDiv.innerHTML = `
+                    <a href="admin/dashboard.html" class="btn btn-danger register-btn me-2">
+                        <i class="fas fa-cog"></i> Admin Panel
+                    </a>
+                    <button onclick="logout()" class="btn btn-outline-danger login-btn">
+                        Cerrar Sesión
+                    </button>
+                `;
+                if (heroButton) heroButton.href = 'admin/dashboard.html';
+            } else {
+                authDiv.innerHTML = `
+                    <span class="text-danger me-3">
+                        <i class="fas fa-user"></i> ${user.displayName || 'Usuario'}
+                    </span>
+                    <a href="perfil.html" class="btn btn-outline-danger login-btn me-2">
+                        Mi Perfil
+                    </a>
+                    <button onclick="logout()" class="btn btn-danger register-btn">
+                        Cerrar Sesión
+                    </button>
+                `;
+                if (heroButton) heroButton.href = 'perfil.html';
+            }
+        } else {
+            authDiv.innerHTML = `
+                <a href="login/login.html" class="btn btn-outline-danger login-btn me-2">
+                    Iniciar Sesión
+                </a>
+                <a href="login/register.html" class="btn btn-danger register-btn">
+                    Registrarse
+                </a>
+            `;
+            if (heroButton) heroButton.href = 'login/register.html';
+        }
+    });
+
+    window.logout = async () => {
+        await auth.signOut();
+        window.location.href = 'index.html';
+    };
+
+    // Mostrar mensajes de URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('registered') === 'true') {
+        alert('¡Registro exitoso! Bienvenido a VITARED');
+    }
+    if (urlParams.get('logged') === 'true') {
+        alert('¡Bienvenido de nuevo!');
+    }
+    if (urlParams.get('error') === 'unauthorized') {
+        alert('No tienes permisos para acceder al panel de administración');
+    }
+
+    // Cargar campañas al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarCampanasDestacadas();
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
