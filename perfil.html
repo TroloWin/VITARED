@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VITARED | Mi Perfil</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="public/css/public.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<!-- NAVBAR (igual que index) -->
+<nav class="navbar navbar-expand-lg shadow-sm sticky-top">
+    <div class="container py-2">
+        <a class="navbar-brand" href="index.html">
+            <img src="public/images/vitared_logo.png" alt="VITARED" style="width: 140px;">
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto">
+                <li><a class="nav-link-custom" href="index.html">Inicio</a></li>
+                <li><a class="nav-link-custom" href="requisitos.html">Requisitos</a></li>
+                <li><a class="nav-link-custom" href="preguntas.html">Preguntas</a></li>
+                <li><a class="nav-link-custom" href="campanas.html">Campañas</a></li>
+                <li><a class="nav-link-custom" href="centros.html">Centros</a></li>
+            </ul>
+
+            <div class="d-flex align-items-center" id="authButtons">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- CONTENIDO DEL PERFIL DE USUARIO -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <!-- Tarjeta de perfil -->
+                <div class="card shadow border-0 text-center p-4">
+                    <div class="mb-3">
+                        <div class="user-avatar-large mx-auto" id="userAvatarLarge">U</div>
+                    </div>
+                    <h4 id="profileName">Cargando...</h4>
+                    <p class="text-muted" id="profileEmail"></p>
+                    
+                    <hr>
+                    
+                    <div class="text-start">
+                        <p><strong>📍 Localidad:</strong> <span id="profileLocation">—</span></p>
+                        <p><strong>📱 Teléfono:</strong> <span id="profilePhone">—</span></p>
+                        <p><strong>🩸 Tipo de sangre:</strong> <span id="profileBloodType">—</span></p>
+                        <p><strong>⚡ Puede donar:</strong> <span id="profilePuedeDonar">—</span></p>
+                        <p><strong>📅 Miembro desde:</strong> <span id="profileSince">—</span></p>
+                        <p><strong>🏥 Donaciones:</strong> <span id="profileDonaciones">0</span></p>
+                    </div>
+                    
+                    <button class="btn btn-outline-danger mt-3" onclick="enableEditMode()">
+                        <i class="fas fa-edit me-2"></i>Editar Perfil
+                    </button>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <!-- Formulario de edición -->
+                <div class="card shadow border-0 p-4" id="editProfileCard" style="display: none;">
+                    <h4 class="text-danger mb-4">Editar Perfil</h4>
+                    
+                    <div id="editError" class="alert alert-danger" style="display: none;"></div>
+                    <div id="editSuccess" class="alert alert-success" style="display: none;"></div>
+                    
+                    <form id="editProfileForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nombre completo</label>
+                            <input type="text" id="editName" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Teléfono</label>
+                            <input type="text" id="editPhone" class="form-control">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Localidad</label>
+                            <input type="text" id="editLocation" class="form-control">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Tipo de sangre</label>
+                            <select id="editBloodType" class="form-select">
+                                <option value="">Selecciona</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Peso (kg)</label>
+                            <input type="number" id="editPeso" class="form-control" step="0.1">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-danger px-5">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary ms-2 px-5" onclick="cancelEdit()">
+                            Cancelar
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Mis Citas -->
+                <div class="card shadow border-0 p-4" id="statsCard">
+                    <h4 class="text-danger mb-4">Mis Próximas Citas</h4>
+                    
+                    <div id="citasContainer">
+                        <p class="text-muted">Cargando citas...</p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h4 class="text-danger mb-3">Agendar Nueva Cita</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <select id="centroSelect" class="form-select">
+                                <option value="">Selecciona centro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <input type="date" id="citaFecha" class="form-control">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <select id="horaSelect" class="form-select" disabled>
+                                <option value="">Primero selecciona fecha</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" onclick="agendarCita()" id="btnAgendar" disabled>
+                        Agendar Cita
+                    </button>
+                </div>
+                
+                <!-- Historial de Donaciones -->
+                <div class="card shadow border-0 p-4 mt-4">
+                    <h4 class="text-danger mb-3">Mi Historial de Donaciones</h4>
+                    <div id="donacionesContainer">
+                        <p class="text-muted">Cargando donaciones...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    © 2025 Donación de Sangre | Proyecto VITARED
+</footer>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+.user-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #8B0000;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 2.5rem;
+    margin: 0 auto;
+}
+</style>
+
+<script src="public/js/firebase-config.js"></script>
+<script>
+    let currentUser = null;
+    let userDocRef = null;
+    let userData = null;
+
+    // Verificar autenticación
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = 'login/login.html';
+            return;
+        }
+        
+        currentUser = user;
+        
+        // Verificar si es admin - si lo es, redirigir a admin/perfil.html
+        const rol = await verificarRolUsuario(user.uid);
+        if (rol.esAdmin) {
+            window.location.href = 'admin/perfil.html';
+            return;
+        }
+        
+        document.getElementById('userName').textContent = user.displayName || 'Usuario';
+        document.getElementById('userAvatar').textContent = (user.displayName || 'U').charAt(0).toUpperCase();
+        document.getElementById('userAvatarLarge').textContent = (user.displayName || 'U').charAt(0).toUpperCase();
+        
+        loadUserProfile();
+        loadCitas();
+        loadDonaciones();
+        cargarCentrosSelect();
+    });
+
+    // Cargar perfil del usuario
+    async function loadUserProfile() {
+        userDocRef = db.collection('users').doc(currentUser.uid);
+        const doc = await userDocRef.get();
+        
+        if (doc.exists) {
+            userData = doc.data();
+            
+            document.getElementById('profileName').textContent = userData.nombre || currentUser.displayName;
+            document.getElementById('profileEmail').textContent = currentUser.email;
+            document.getElementById('profileLocation').textContent = userData.localidad || '—';
+            document.getElementById('profilePhone').textContent = userData.telefono || '—';
+            document.getElementById('profileBloodType').textContent = userData.tipoSangre || '—';
+            document.getElementById('profileDonaciones').textContent = userData.donacionesRealizadas || 0;
+            
+            document.getElementById('profilePuedeDonar').innerHTML = userData.puedeDonar ? 
+                '<span class="badge bg-success">Sí</span>' : 
+                '<span class="badge bg-secondary">No</span>';
+            
+            if (userData.createdAt) {
+                const fecha = userData.createdAt.toDate ? 
+                    userData.createdAt.toDate().toLocaleDateString() : 
+                    new Date().toLocaleDateString();
+                document.getElementById('profileSince').textContent = fecha;
+            }
+            
+            // Llenar formulario de edición
+            document.getElementById('editName').value = userData.nombre || '';
+            document.getElementById('editPhone').value = userData.telefono || '';
+            document.getElementById('editLocation').value = userData.localidad || '';
+            document.getElementById('editBloodType').value = userData.tipoSangre || '';
+            document.getElementById('editPeso').value = userData.peso || '';
+        }
+    }
+
+    // Cargar citas del usuario
+    async function loadCitas() {
+        const container = document.getElementById('citasContainer');
+        
+        const hoy = new Date();
+        hoy.setHours(0,0,0,0);
+        
+        const snapshot = await db.collection('citas')
+            .where('userId', '==', currentUser.uid)
+            .where('fecha', '>=', hoy)
+            .orderBy('fecha')
+            .get();
+        
+        if (snapshot.empty) {
+            container.innerHTML = '<p class="text-muted">No tienes citas programadas</p>';
+            return;
+        }
+        
+        let html = '<div class="list-group">';
+        snapshot.forEach(doc => {
+            const cita = doc.data();
+            const fecha = cita.fecha.toDate ? 
+                cita.fecha.toDate().toLocaleString() : 
+                'Fecha no disponible';
+            
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>📅 ${fecha}</strong><br>
+                        <small>Estado: <span class="badge bg-${cita.estado === 'pendiente' ? 'warning' : 'success'}">${cita.estado || 'pendiente'}</span></small>
+                    </div>
+                    ${cita.estado === 'pendiente' ? 
+                        `<button class="btn btn-sm btn-outline-danger" onclick="cancelarCita('${doc.id}')">
+                            Cancelar
+                        </button>` : ''}
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    // Cargar historial de donaciones
+    async function loadDonaciones() {
+        const container = document.getElementById('donacionesContainer');
+        
+        const snapshot = await db.collection('donaciones')
+            .where('userId', '==', currentUser.uid)
+            .orderBy('fecha', 'desc')
+            .limit(10)
+            .get();
+        
+        if (snapshot.empty) {
+            container.innerHTML = '<p class="text-muted">No tienes donaciones registradas</p>';
+            return;
+        }
+        
+        let html = '<div class="list-group">';
+        snapshot.forEach(doc => {
+            const donacion = doc.data();
+            const fecha = donacion.fecha.toDate ? 
+                donacion.fecha.toDate().toLocaleDateString() : 
+                'Fecha no disponible';
+            
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>📅 ${fecha}</strong>
+                            <p class="mb-0">Cantidad: ${donacion.cantidad || '450ml'}</p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="verComprobante('${doc.id}')">
+                            Ver comprobante
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    // Ver comprobante
+    window.verComprobante = async (donacionId) => {
+        const comprobante = await db.collection('comprobantes').doc(donacionId).get();
+        if (comprobante.exists) {
+            const data = comprobante.data();
+            alert(`🧾 COMPROBANTE\n\nFolio: ${data.folio}\nFecha: ${data.fecha}\nCentro: ${data.centro}\nCantidad: ${data.cantidad}`);
+        } else {
+            alert('Comprobante no disponible');
+        }
+    };
+
+    // Cargar centros para agendar cita
+    async function cargarCentrosSelect() {
+        const centros = await obtenerCentrosDonacion();
+        const select = document.getElementById('centroSelect');
+        
+        if (centros.length === 0) {
+            select.innerHTML = `
+                <option value="hospital-general">Hospital General</option>
+                <option value="centro-salud">Centro de Salud La Paz</option>
+            `;
+        } else {
+            centros.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.id;
+                option.textContent = c.nombre;
+                select.appendChild(option);
+            });
+        }
+    }
+
+    // Actualizar horarios disponibles
+    document.getElementById('centroSelect').addEventListener('change', actualizarHorarios);
+    document.getElementById('citaFecha').addEventListener('change', actualizarHorarios);
+
+    async function actualizarHorarios() {
+        const centroId = document.getElementById('centroSelect').value;
+        const fecha = document.getElementById('citaFecha').value;
+        const horaSelect = document.getElementById('horaSelect');
+        const btnAgendar = document.getElementById('btnAgendar');
+        
+        if (!centroId || !fecha) {
+            horaSelect.disabled = true;
+            btnAgendar.disabled = true;
+            return;
+        }
+        
+        const disponibilidad = await obtenerDisponibilidadCentro(centroId, fecha);
+        
+        horaSelect.innerHTML = '';
+        horaSelect.disabled = false;
+        
+        if (disponibilidad.disponibles.length === 0) {
+            horaSelect.innerHTML = '<option value="">No hay horarios disponibles</option>';
+            btnAgendar.disabled = true;
+            return;
+        }
+        
+        disponibilidad.disponibles.forEach(hora => {
+            const option = document.createElement('option');
+            option.value = hora;
+            option.textContent = hora;
+            horaSelect.appendChild(option);
+        });
+        
+        btnAgendar.disabled = false;
+    }
+
+    // Agendar cita
+    window.agendarCita = async () => {
+        if (!userData.puedeDonar) {
+            alert('No cumples con los requisitos para donar. Revisa tu perfil.');
+            return;
+        }
+        
+        const centroId = document.getElementById('centroSelect').value;
+        const fecha = document.getElementById('citaFecha').value;
+        const hora = document.getElementById('horaSelect').value;
+        
+        if (!centroId || !fecha || !hora) {
+            alert('Selecciona todos los campos');
+            return;
+        }
+        
+        const resultado = await agendarCita(currentUser.uid, centroId, fecha, hora);
+        
+        if (resultado.success) {
+            alert('✅ Cita agendada correctamente');
+            loadCitas();
+        } else {
+            alert('❌ Error: ' + resultado.error);
+        }
+    };
+
+    // Cancelar cita
+    window.cancelarCita = async (citaId) => {
+        if (!confirm('¿Cancelar esta cita?')) return;
+        
+        try {
+            await db.collection('citas').doc(citaId).update({
+                estado: 'cancelada'
+            });
+            alert('Cita cancelada');
+            loadCitas();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    };
+
+    // Editar perfil
+    function enableEditMode() {
+        document.getElementById('editProfileCard').style.display = 'block';
+        document.getElementById('statsCard').style.display = 'none';
+    }
+
+    function cancelEdit() {
+        document.getElementById('editProfileCard').style.display = 'none';
+        document.getElementById('statsCard').style.display = 'block';
+    }
+
+    document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const updates = {
+            nombre: document.getElementById('editName').value,
+            telefono: document.getElementById('editPhone').value,
+            localidad: document.getElementById('editLocation').value,
+            tipoSangre: document.getElementById('editBloodType').value,
+            peso: parseFloat(document.getElementById('editPeso').value) || null,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        try {
+            await userDocRef.update(updates);
+            
+            if (updates.nombre !== currentUser.displayName) {
+                await currentUser.updateProfile({ displayName: updates.nombre });
+            }
+            
+            // Re-validar requisitos
+            await verificarRequisitosDonante(currentUser.uid);
+            
+            document.getElementById('editSuccess').textContent = '✅ Perfil actualizado correctamente';
+            document.getElementById('editSuccess').style.display = 'block';
+            
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+            
+        } catch (error) {
+            document.getElementById('editError').textContent = '❌ Error: ' + error.message;
+            document.getElementById('editError').style.display = 'block';
+        }
+    });
+
+    // Logout
+    window.logout = () => {
+        auth.signOut();
+        window.location.href = 'index.html';
+    };
+
+    // Botones de autenticación en navbar
+    auth.onAuthStateChanged(async (user) => {
+        const authDiv = document.getElementById('authButtons');
+        
+        if (user) {
+            const rol = await verificarRolUsuario(user.uid);
+            
+            if (rol.esAdmin) {
+                authDiv.innerHTML = `
+                    <a href="admin/dashboard.html" class="btn btn-danger register-btn me-2">
+                        Admin Panel
+                    </a>
+                    <button onclick="logout()" class="btn btn-outline-danger login-btn">
+                        Cerrar Sesión
+                    </button>
+                `;
+            } else {
+                authDiv.innerHTML = `
+                    <span class="text-danger me-3">
+                        <i class="fas fa-user"></i> ${user.displayName}
+                    </span>
+                    <a href="perfil.html" class="btn btn-outline-danger login-btn me-2">
+                        Mi Perfil
+                    </a>
+                    <button onclick="logout()" class="btn btn-danger register-btn">
+                        Cerrar Sesión
+                    </button>
+                `;
+            }
+        } else {
+            authDiv.innerHTML = `
+                <a href="login/login.html" class="btn btn-outline-danger login-btn me-2">
+                    Iniciar Sesión
+                </a>
+                <a href="login/register.html" class="btn btn-danger register-btn">
+                    Registrarse
+                </a>
+            `;
+        }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
