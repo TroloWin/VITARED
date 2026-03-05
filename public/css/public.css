@@ -297,3 +297,114 @@ footer{
 }
 
 }
+/* ========================================
+   PERFIL USUARIO
+   ======================================== */
+
+.perfil-section{
+    background:#f7f7f7;
+    min-height:80vh;
+}
+
+/* Tarjeta perfil */
+
+.perfil-card{
+    border-radius:18px;
+    box-shadow:var(--shadow-card);
+    transition:all 0.3s ease;
+}
+
+.perfil-card:hover{
+    transform:translateY(-5px);
+    box-shadow:var(--shadow-card-hover);
+}
+
+/* Avatar */
+
+.avatar-container{
+    display:flex;
+    justify-content:center;
+}
+
+.user-avatar-large{
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--primary-dark),var(--primary));
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    font-size:2.6rem;
+    box-shadow:0 8px 20px rgba(0,0,0,0.25);
+}
+
+/* Información usuario */
+
+.perfil-info{
+    margin-top:20px;
+}
+
+.info-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid #eee;
+    font-size:15px;
+}
+
+.info-item span{
+    color:#777;
+}
+
+.info-item strong{
+    color:#333;
+    font-weight:600;
+}
+
+/* Historial */
+
+.list-group-item{
+    border:none;
+    border-bottom:1px solid #eee;
+    padding:14px 5px;
+}
+
+.list-group-item:hover{
+    background:#fafafa;
+}
+
+/* Botones perfil */
+
+.perfil-card .btn{
+    border-radius:25px;
+    font-weight:500;
+    transition:all 0.3s ease;
+}
+
+.perfil-card .btn:hover{
+    transform:translateY(-2px);
+}
+
+/* Editar perfil card */
+
+#editProfileCard{
+    border-radius:18px;
+    box-shadow:var(--shadow-card);
+}
+
+/* Responsive perfil */
+
+@media(max-width:992px){
+
+.perfil-card{
+    margin-bottom:20px;
+}
+
+.info-item{
+    font-size:14px;
+}
+
+}

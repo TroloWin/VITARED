@@ -7,20 +7,25 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="public/css/public.css">
-    
+
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
+
 <body>
 
+<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg shadow-sm sticky-top">
     <div class="container py-2">
+
         <a class="navbar-brand" href="index.html">
-            <img src="public/images/vitared_logo.png" alt="VITARED" style="width: 140px;">
+            <img src="public/images/vitared_logo.png" alt="VITARED" style="width:140px;">
         </a>
 
         <div class="collapse navbar-collapse" id="navbarNav">
+
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="index.html">Inicio</a></li>
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="requisitos.html">Requisitos</a></li>
@@ -28,11 +33,15 @@
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="campanas.html">Campañas</a></li>
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="centros.html">Centros</a></li>
             </ul>
+
             <div class="d-flex align-items-center" id="authButtons"></div>
+
         </div>
     </div>
 </nav>
 
+
+<!-- HERO -->
 <section class="campanas-hero">
     <div class="container text-center">
         <h1 class="display-4 fw-bold text-white">Campañas de Donación</h1>
@@ -40,135 +49,219 @@
     </div>
 </section>
 
+
+<!-- LISTA DE CAMPAÑAS -->
 <section class="py-5">
     <div class="container">
         <div id="campanasContainer" class="row"></div>
     </div>
 </section>
 
+
 <footer>
     © 2025 Donación de Sangre | Proyecto VITARED
 </footer>
 
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 <script src="public/js/firebase-config.js"></script>
 
 <script>
+
 let todasLasCampanas = [];
 
-async function cargarCampanas() {
-    const snapshot = await db.collection('campanas').orderBy('fecha','desc').get();
+async function cargarCampanas(){
+
+    const container = document.getElementById("campanasContainer");
+
+    if(!container){
+        console.error("No se encontró el contenedor de campañas");
+        return;
+    }
+
+    const snapshot = await db.collection("campanas")
+        .orderBy("fecha","desc")
+        .get();
+
     const campanas = [];
 
-    snapshot.forEach(doc => {
-        campanas.push({ id: doc.id, ...doc.data() });
+    snapshot.forEach(doc=>{
+        campanas.push({
+            id: doc.id,
+            ...doc.data()
+        });
     });
 
     todasLasCampanas = campanas;
+
+    if(campanas.length === 0){
+        container.innerHTML = `
+        <div class="text-center">
+            <p class="text-muted">No hay campañas disponibles.</p>
+        </div>`;
+        return;
+    }
+
     mostrarCampanas(campanas);
 }
 
-function mostrarCampanas(campanas) {
-    const container = document.getElementById('campanasContainer');
-    let html = '';
 
-    campanas.forEach(c => {
 
-        const estado = c.estado || 'Inactiva';
+function mostrarCampanas(campanas){
 
-        let badgeEstado = '';
-        let botonDisabled = '';
+    const container = document.getElementById("campanasContainer");
 
-        if (estado === 'Activa') {
+    let html = "";
+
+    campanas.forEach(c=>{
+
+        const estado = c.estado || "Inactiva";
+
+        let badgeEstado = "";
+        let botonDisabled = "";
+
+        if(estado === "Activa"){
             badgeEstado = '<span class="badge bg-success">Activa</span>';
         }
 
-        if (estado === 'Inactiva') {
+        if(estado === "Inactiva"){
             badgeEstado = '<span class="badge bg-secondary">Inactiva</span>';
-            botonDisabled = 'disabled';
+            botonDisabled = "disabled";
         }
 
-        if (estado === 'Finalizada') {
+        if(estado === "Finalizada"){
             badgeEstado = '<span class="badge bg-danger">Finalizada</span>';
-            botonDisabled = 'disabled';
+            botonDisabled = "disabled";
         }
 
         html += `
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card campaign-card h-100">
-                    ${c.destacada ? '<div class="badge bg-warning text-dark position-absolute m-2">⭐ Destacada</div>' : ''}
-                    <img src="public/images/${c.imagen || 'campana-default.jpg'}" class="card-img-top">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="text-danger fw-bold">${c.titulo}</h5>
-                        <p>${c.descripcion || ''}</p>
-                        <p><strong>📍 ${c.ubicacion}</strong></p>
-                        <p><strong>📅 ${c.fecha || ''}</strong></p>
-                        <p>${badgeEstado}</p>
-                        <div class="mt-auto">
-                            <button class="btn btn-danger w-100"
-                                onclick="agendarCitaCampana('${c.id}')"
-                                ${botonDisabled}>
-                                Agendar cita
-                            </button>
-                        </div>
+        <div class="col-md-6 col-lg-4 mb-4">
+
+            <div class="card campaign-card h-100 shadow-sm">
+
+                ${c.destacada ? `<div class="badge bg-warning text-dark position-absolute m-2">⭐ Destacada</div>` : ""}
+
+                <img src="public/images/${c.imagen || "campana-default.jpg"}" 
+                     class="card-img-top"
+                     style="height:200px; object-fit:cover;">
+
+                <div class="card-body d-flex flex-column">
+
+                    <h5 class="text-danger fw-bold">${c.titulo || "Campaña de Donación"}</h5>
+
+                    <p>${c.descripcion || ""}</p>
+
+                    <p><strong>📍 ${c.ubicacion || "Ubicación no disponible"}</strong></p>
+
+                    <p><strong>📅 ${c.fecha || ""}</strong></p>
+
+                    <p>${badgeEstado}</p>
+
+                    <div class="mt-auto">
+
+                        <button class="btn btn-danger w-100"
+                        onclick="inscribirseCampana('${c.id}')"
+                        ${botonDisabled}>
+                        Inscribirme
+                        </button>
+
                     </div>
+
                 </div>
+
             </div>
+
+        </div>
         `;
     });
 
     container.innerHTML = html;
 }
 
-window.agendarCitaCampana = async (campanaId) => {
+
+
+window.inscribirseCampana = async (campanaId)=>{
+
     const user = auth.currentUser;
 
-    if (!user) {
-        window.location.href = 'login/login.html';
+    if(!user){
+        window.location.href = "login/login.html";
         return;
     }
 
-    const doc = await db.collection('campanas').doc(campanaId).get();
+    const doc = await db.collection("campanas")
+        .doc(campanaId)
+        .get();
+
     const campana = doc.data();
 
-    // 🔴 BLOQUEO REAL EN BASE DE DATOS
-    if (campana.estado === "Finalizada") {
+    if(campana.estado === "Finalizada"){
         alert("❌ Esta campaña ya está finalizada.");
         return;
     }
 
-    if (campana.estado === "Inactiva") {
+    if(campana.estado === "Inactiva"){
         alert("⚠️ Esta campaña no está disponible actualmente.");
         return;
     }
 
-    window.location.href = 'perfil.html?campana=' + campanaId;
+    // REDIRIGE AL FORMULARIO
+    window.location.href = "public/formulario-donacion.html?campana=" + campanaId;
+
 };
 
-auth.onAuthStateChanged((user) => {
-    const authDiv = document.getElementById('authButtons');
 
-    if (user) {
+
+auth.onAuthStateChanged((user)=>{
+
+    const authDiv = document.getElementById("authButtons");
+
+    if(user){
+
         authDiv.innerHTML = `
-            <a href="perfil.html" class="btn btn-outline-danger me-2">Mi Perfil</a>
-            <button onclick="logout()" class="btn btn-danger">Cerrar Sesión</button>
+        <a href="perfil.html" class="btn btn-outline-danger me-2">
+        Mi Perfil
+        </a>
+
+        <button onclick="logout()" class="btn btn-danger">
+        Cerrar Sesión
+        </button>
         `;
-    } else {
+
+    }else{
+
         authDiv.innerHTML = `
-            <a href="login/login.html" class="btn btn-outline-danger me-2">Iniciar Sesión</a>
-            <a href="login/register.html" class="btn btn-danger">Registrarse</a>
+        <a href="login/login.html" class="btn btn-outline-danger me-2">
+        Iniciar Sesión
+        </a>
+
+        <a href="login/register.html" class="btn btn-danger">
+        Registrarse
+        </a>
         `;
     }
+
 });
 
-window.logout = () => {
+
+
+window.logout = ()=>{
+
     auth.signOut();
-    window.location.href = 'index.html';
+
+    window.location.href = "index.html";
+
 };
 
-document.addEventListener('DOMContentLoaded', cargarCampanas);
+
+
+document.addEventListener("DOMContentLoaded", cargarCampanas);
+
 </script>
 
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

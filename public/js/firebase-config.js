@@ -645,6 +645,41 @@ auth.onAuthStateChanged(async (user) => {
         }
     }
 });
+// ===========================================
+// INSCRIPCIÓN A CAMPAÑAS (FORMULARIO DONACIÓN)
+// ===========================================
+
+async function registrarInscripcion(datos) {
+    try {
+
+        const inscripcion = {
+            nombre: datos.nombre,
+            correo: datos.correo,
+            telefono: datos.telefono,
+            tipoSangre: datos.tipoSangre,
+            edad: datos.edad,
+            peso: datos.peso,
+            campana: datos.campana,
+            fechaDisponible: datos.fechaDisponible,
+            comentarios: datos.comentarios || "",
+            estado: "pendiente",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        await db.collection("inscripciones").add(inscripcion);
+
+        console.log("✅ Inscripción guardada correctamente");
+
+        return { success: true };
+
+    } catch (error) {
+
+        console.error("❌ Error guardando inscripción:", error);
+
+        return { success: false, error: error.message };
+
+    }
+}
 
 // ===========================================
 // EXPORTAR FUNCIONES GLOBALES
@@ -665,5 +700,6 @@ window.agendarCita = agendarCita;
 window.registrarDonacion = registrarDonacion;
 window.recuperarUsuarioEnFirestore = recuperarUsuarioEnFirestore;
 window.crearPrimerAdmin = crearPrimerAdmin;
+window.registrarInscripcion = registrarInscripcion;
 
 console.log("✅ Firebase config cargado correctamente");
