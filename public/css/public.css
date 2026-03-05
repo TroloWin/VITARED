@@ -43,7 +43,26 @@ body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.08);
 }
 
+<<<<<<< Updated upstream
 /* Logo redondo */
+=======
+<<<<<<< HEAD
+.navbar .container {
+    max-width: 1140px;
+    height: 150px;
+    margin: 0 auto;
+    padding: 0.5rem 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+/* Logo */
+=======
+/* Logo redondo */
+>>>>>>> fe901f9444cc1517b2bd25cf5b9038790f468407
+>>>>>>> Stashed changes
 .navbar-brand img {
     width: 110px;
     height: 110px;
