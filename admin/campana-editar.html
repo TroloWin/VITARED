@@ -47,7 +47,7 @@
     <div class="card shadow">
         <div class="card-body">
             <div id="errorAlert" class="alert alert-danger" style="display: none;"></div>
-            <div id="loadingAlert" class="alert alert-info" style="display: none;">Cargando datos...</div>
+            <div id="successAlert" class="alert alert-success" style="display: none;"></div>
             
             <form id="campanaForm">
                 <div class="mb-3">
@@ -78,11 +78,11 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Cupo Máximo</label>
-                        <input type="number" id="cupo" class="form-control" value="50">
+                        <input type="number" id="cupo" class="form-control">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Imagen (nombre archivo)</label>
-                        <input type="text" id="imagen" class="form-control" placeholder="ej: campana1.jpg">
+                        <input type="text" id="imagen" class="form-control">
                     </div>
                 </div>
 
@@ -93,7 +93,6 @@
                     </label>
                 </div>
 
-                <!-- NUEVO CAMPO: DESTACADA -->
                 <div class="form-check mb-4">
                     <input type="checkbox" id="destacada" class="form-check-input">
                     <label class="form-check-label" for="destacada">
@@ -117,13 +116,13 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <script src="../public/js/firebase-config.js"></script>
-<script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const campanaId = urlParams.get('id');
 
-    if (!campanaId) {
-        window.location.href = 'campanas-admin.html';
-    }
+<script>
+    let campanaId = null;
+
+    // Obtener ID desde URL
+    const params = new URLSearchParams(window.location.search);
+    campanaId = params.get("id");
 
     auth.onAuthStateChanged(async (user) => {
         if (!user) {
@@ -136,59 +135,45 @@
             window.location.href = '../index.html?error=unauthorized';
             return;
         }
-        
+
         document.getElementById('userName').textContent = user.displayName || 'Admin';
         document.getElementById('userAvatar').textContent = (user.displayName || 'A').charAt(0).toUpperCase();
-        
+
         cargarCampana();
     });
 
     async function cargarCampana() {
-        try {
-            document.getElementById('loadingAlert').style.display = 'block';
-            
-            const doc = await db.collection('campanas').doc(campanaId).get();
-            
-            if (!doc.exists) {
-                window.location.href = 'campanas-admin.html?error=notfound';
-                return;
-            }
-            
-            const c = doc.data();
-            
-            document.getElementById('titulo').value = c.titulo || '';
-            document.getElementById('descripcion').value = c.descripcion || '';
-            document.getElementById('ubicacion').value = c.ubicacion || '';
-            document.getElementById('cupo').value = c.cupoMaximo || 50;
-            document.getElementById('imagen').value = c.imagen || '';
-            document.getElementById('activa').checked = c.activa || false;
-            document.getElementById('destacada').checked = c.destacada || false;  // NUEVO CAMPO
-            
-            if (c.fecha) {
-                const fecha = c.fecha.toDate ? c.fecha.toDate() : new Date(c.fecha);
-                const year = fecha.getFullYear();
-                const month = String(fecha.getMonth() + 1).padStart(2, '0');
-                const day = String(fecha.getDate()).padStart(2, '0');
-                document.getElementById('fecha').value = `${year}-${month}-${day}`;
-            }
-            
-            if (c.hora) {
-                document.getElementById('hora').value = c.hora;
-            }
-            
-            document.getElementById('loadingAlert').style.display = 'none';
-            
-        } catch (error) {
-            document.getElementById('loadingAlert').style.display = 'none';
-            document.getElementById('errorAlert').textContent = 'Error cargando: ' + error.message;
-            document.getElementById('errorAlert').style.display = 'block';
+        if (!campanaId) {
+            alert("ID de campaña no válido");
+            window.location.href = "campanas-admin.html";
+            return;
         }
+
+        const doc = await db.collection("campanas").doc(campanaId).get();
+
+        if (!doc.exists) {
+            alert("Campaña no encontrada");
+            window.location.href = "campanas-admin.html";
+            return;
+        }
+
+        const data = doc.data();
+
+        document.getElementById("titulo").value = data.titulo || "";
+        document.getElementById("descripcion").value = data.descripcion || "";
+        document.getElementById("ubicacion").value = data.ubicacion || "";
+        document.getElementById("fecha").value = data.fecha || "";
+        document.getElementById("hora").value = data.hora || "";
+        document.getElementById("cupo").value = data.cupoMaximo || 50;
+        document.getElementById("imagen").value = data.imagen || "";
+        document.getElementById("activa").checked = data.activa || false;
+        document.getElementById("destacada").checked = data.destacada || false;
     }
 
-    document.getElementById('campanaForm').addEventListener('submit', async (e) => {
+    document.getElementById("campanaForm").addEventListener("submit", async (e) => {
         e.preventDefault();
-        
-        const datos = {
+
+        const datosActualizados = {
             titulo: document.getElementById('titulo').value,
             descripcion: document.getElementById('descripcion').value,
             ubicacion: document.getElementById('ubicacion').value,
@@ -197,22 +182,25 @@
             cupoMaximo: parseInt(document.getElementById('cupo').value) || 50,
             imagen: document.getElementById('imagen').value || 'campana-default.jpg',
             activa: document.getElementById('activa').checked,
-            destacada: document.getElementById('destacada').checked  // NUEVO CAMPO
+            destacada: document.getElementById('destacada').checked,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
-        if (!datos.titulo || !datos.descripcion || !datos.ubicacion || !datos.fecha) {
-            alert('Completa todos los campos requeridos');
-            return;
-        }
-        
-        const resultado = await actualizarCampana(campanaId, datos);
-        
-        if (resultado.success) {
-            window.location.href = 'campanas-admin.html?success=actualizada';
-        } else {
-            const alertDiv = document.getElementById('errorAlert');
-            alertDiv.textContent = '❌ Error: ' + resultado.error;
-            alertDiv.style.display = 'block';
+
+        try {
+            await db.collection("campanas").doc(campanaId).update(datosActualizados);
+
+            const successDiv = document.getElementById("successAlert");
+            successDiv.textContent = "✅ Campaña actualizada correctamente";
+            successDiv.style.display = "block";
+
+            setTimeout(() => {
+                window.location.href = "campanas-admin.html?success=editada";
+            }, 1500);
+
+        } catch (error) {
+            const alertDiv = document.getElementById("errorAlert");
+            alertDiv.textContent = "❌ Error: " + error.message;
+            alertDiv.style.display = "block";
         }
     });
 
