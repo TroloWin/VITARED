@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Admin | Donadores Inscritos</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<link rel="stylesheet" href="../public/css/public.css">
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+
+<nav class="navbar navbar-dark bg-danger shadow">
+<div class="container">
+
+<a class="navbar-brand text-white" href="../index.html">
+🩸 VITARED Admin
+</a>
+
+<button class="btn btn-light" onclick="cerrarSesion()">
+Cerrar sesión
+</button>
+
+</div>
+</nav>
+
+
+
+<!-- PANEL -->
+
+<div class="container py-5">
+
+<h2 class="text-danger mb-4">
+Donadores inscritos en campañas
+</h2>
+
+<div class="card shadow">
+
+<div class="card-body">
+
+<div class="table-responsive">
+
+<table class="table table-hover">
+
+<thead class="table-danger">
+
+<tr>
+
+<th>Nombre</th>
+<th>Correo</th>
+<th>Teléfono</th>
+<th>Tipo de Sangre</th>
+<th>Edad</th>
+<th>Fecha Disponible</th>
+<th>Acciones</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tablaDonadores">
+
+<tr>
+<td colspan="7" class="text-center">
+Cargando datos...
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<script src="../public/js/firebase-config.js"></script>
+
+<script>
+
+const tabla = document.getElementById("tablaDonadores");
+
+async function cargarDonadores(){
+
+try{
+
+const snapshot = await db.collection("inscripciones").get();
+
+tabla.innerHTML = "";
+
+if(snapshot.empty){
+
+tabla.innerHTML=`
+<tr>
+<td colspan="7" class="text-center">
+No hay donadores registrados
+</td>
+</tr>
+`;
+
+return;
+
+}
+
+snapshot.forEach(doc=>{
+
+const d = doc.data();
+
+tabla.innerHTML += `
+
+<tr>
+
+<td>${d.nombre}</td>
+<td>${d.correo}</td>
+<td>${d.telefono}</td>
+<td>${d.tipoSangre}</td>
+<td>${d.edad}</td>
+<td>${d.fechaDisponible}</td>
+
+<td>
+
+<button class="btn btn-sm btn-danger"
+onclick="eliminarDonador('${doc.id}')">
+Eliminar
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+}catch(error){
+
+tabla.innerHTML=`
+<tr>
+<td colspan="7" class="text-center text-danger">
+Error cargando datos
+</td>
+</tr>
+`;
+
+}
+
+}
+
+async function eliminarDonador(id){
+
+if(!confirm("¿Eliminar este registro?")) return;
+
+await db.collection("inscripciones").doc(id).delete();
+
+cargarDonadores();
+
+}
+
+cargarDonadores();
+
+</script>
+
+</body>
+</html>

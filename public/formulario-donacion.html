@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>VITARED | Registro de Donación</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="public/css/public.css">
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+
+<nav class="navbar navbar-expand-lg shadow-sm">
+<div class="container py-2">
+
+<a class="navbar-brand" href="index.html">
+<img src="public/images/vitared_logo.png" width="70">
+</a>
+
+<div class="collapse navbar-collapse">
+
+<ul class="navbar-nav mx-auto">
+<li><a class="nav-link nav-link-custom" href="index.html">Inicio</a></li>
+<li><a class="nav-link nav-link-custom" href="campanas.html">Campañas</a></li>
+<li><a class="nav-link nav-link-custom" href="centros.html">Centros</a></li>
+<li><a class="nav-link nav-link-custom" href="perfil.html">Mi perfil</a></li>
+</ul>
+
+</div>
+</div>
+</nav>
+
+
+
+<!-- FORMULARIO -->
+
+<section class="container py-5">
+
+<div class="row justify-content-center">
+
+<div class="col-lg-8">
+
+<div class="card shadow border-0 p-4">
+
+<h3 class="text-center text-danger mb-4">
+🩸 Registro de Donación
+</h3>
+
+<p class="text-center text-muted mb-4">
+Completa este formulario para participar en la campaña de donación de sangre.
+</p>
+
+<form id="donacionForm">
+
+<div class="row">
+
+<div class="col-md-6 mb-3">
+<label class="form-label">Nombre completo</label>
+<input type="text" id="nombre" class="form-control" required>
+</div>
+
+<div class="col-md-6 mb-3">
+<label class="form-label">Correo electrónico</label>
+<input type="email" id="email" class="form-control" required>
+</div>
+
+<div class="col-md-6 mb-3">
+<label class="form-label">Teléfono</label>
+<input type="text" id="telefono" class="form-control" required>
+</div>
+
+<div class="col-md-6 mb-3">
+<label class="form-label">Tipo de sangre</label>
+
+<select id="tipoSangre" class="form-select" required>
+
+<option value="">Selecciona</option>
+<option>A+</option>
+<option>A-</option>
+<option>B+</option>
+<option>B-</option>
+<option>AB+</option>
+<option>AB-</option>
+<option>O+</option>
+<option>O-</option>
+
+</select>
+
+</div>
+
+<div class="col-md-6 mb-3">
+<label class="form-label">Edad</label>
+<input type="number" id="edad" class="form-control" required>
+</div>
+
+<div class="col-md-6 mb-3">
+<label class="form-label">Peso (kg)</label>
+<input type="number" id="peso" class="form-control" required>
+</div>
+
+<div class="col-md-12 mb-3">
+<label class="form-label">Campaña</label>
+
+<select id="campana" class="form-select" required>
+
+<option value="">Selecciona una campaña</option>
+<option>Campaña Universitaria</option>
+<option>Campaña Hospital General</option>
+<option>Campaña Cruz Roja</option>
+
+</select>
+
+</div>
+
+<div class="col-md-12 mb-3">
+<label class="form-label">Fecha disponible para donar</label>
+<input type="date" id="fecha" class="form-control" required>
+</div>
+
+<div class="col-md-12 mb-3">
+<label class="form-label">Comentarios (opcional)</label>
+<textarea id="comentarios" class="form-control"></textarea>
+</div>
+
+</div>
+
+<div class="text-center mt-3">
+
+<button class="btn btn-danger px-5">
+Inscribirme a la campaña
+</button>
+
+</div>
+
+</form>
+
+<div id="mensaje" class="mt-4 text-center"></div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+
+<footer>
+© 2025 Donación de Sangre | Proyecto VITARED
+</footer>
+
+
+
+<script src="public/js/firebase-config.js"></script>
+
+<script>
+
+const form = document.getElementById("donacionForm");
+const mensaje = document.getElementById("mensaje");
+
+/* OBTENER CAMPAÑA DESDE LA URL */
+
+const params = new URLSearchParams(window.location.search);
+const campanaURL = params.get("campana");
+
+if(campanaURL){
+    document.getElementById("campana").value = campanaURL;
+}
+
+
+/* GUARDAR FORMULARIO */
+
+form.addEventListener("submit", async (e)=>{
+
+e.preventDefault();
+
+const user = auth.currentUser;
+
+if(!user){
+mensaje.innerHTML=`
+<div class="alert alert-warning">
+Debes iniciar sesión para registrarte.
+</div>
+`;
+return;
+}
+
+const data={
+
+uid:user.uid,
+nombre:document.getElementById("nombre").value,
+email:document.getElementById("email").value,
+telefono:document.getElementById("telefono").value,
+tipoSangre:document.getElementById("tipoSangre").value,
+edad:parseInt(document.getElementById("edad").value),
+peso:parseInt(document.getElementById("peso").value),
+campana:document.getElementById("campana").value,
+fecha:document.getElementById("fecha").value,
+comentarios:document.getElementById("comentarios").value,
+createdAt:firebase.firestore.FieldValue.serverTimestamp()
+
+};
+
+try{
+
+await registrarInscripcion(data);
+
+mensaje.innerHTML=`
+<div class="alert alert-success">
+✅ Registro enviado correctamente. ¡Gracias por donar sangre!
+</div>
+`;
+
+form.reset();
+
+}catch(error){
+
+console.error(error);
+
+mensaje.innerHTML=`
+<div class="alert alert-danger">
+❌ Error al registrar la donación
+</div>
+`;
+
+}
+
+});
+
+</script>
+
+
+</body>
+</html>
