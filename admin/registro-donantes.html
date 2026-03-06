@@ -1,204 +1,321 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VITARED | Registro de Donantes por Campaña</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../public/css/public.css">
+    <link rel="stylesheet" href="css/admin.css">
 
-<title>Registro de Donantes</title>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="admin-body">
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- SIDEBAR - 5 OPCIONES -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <img src="../public/images/vitared_logo.png" alt="VITARED">
+        <h3>Admin Panel</h3>
+    </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <div class="sidebar-nav">
+        <ul>
+            <li>
+                <a href="dashboard.html">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="gestionar-campanas.html">
+                    <i class="fas fa-calendar-alt"></i> Gestionar Campañas
+                </a>
+            </li>
+            <li>
+                <a href="registro-donantes.html" class="active">
+                    <i class="fas fa-user-plus"></i> Registro de Donantes
+                </a>
+            </li>
+            <li>
+                <a href="../index.html" target="_blank">
+                    <i class="fas fa-globe"></i> Ver Página Web
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <div class="top-bar">
+        <h2>Registro de Donantes por Campaña</h2>
+    </div>
+
+    <!-- SELECTOR DE CAMPAÑA -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Seleccionar Campaña</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <select id="campanaSelect" class="form-select form-select-lg">
+                        <option value="">-- Selecciona una campaña --</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-danger w-100" onclick="cargarInscritos()">
+                        <i class="fas fa-search me-2"></i>Ver Inscritos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INFORMACIÓN DE LA CAMPAÑA SELECCIONADA -->
+    <div id="infoCampana" class="alert alert-info" style="display: none;">
+        <h5 id="campanaTitulo"></h5>
+        <p id="campanaDetalles"></p>
+    </div>
+
+    <!-- TABLA DE INSCRITOS -->
+    <div class="card shadow">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="fas fa-users me-2"></i>Donantes Inscritos</h5>
+        </div>
+        <div class="card-body">
+            <div id="loadingSpinner" class="text-center py-4" style="display: none;">
+                <div class="spinner-border text-danger" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Cargando inscritos...</p>
+            </div>
+
+            <div id="noSeleccionada" class="text-center py-5">
+                <i class="fas fa-hand-pointer fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Selecciona una campaña para ver los donantes inscritos</h5>
+            </div>
+
+            <div id="tablaContainer" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Ticket</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Tipo de Sangre</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inscritosTableBody">
+                            <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="sinInscritos" class="alert alert-warning text-center" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No hay donantes inscritos para esta campaña
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <script src="../public/js/firebase-config.js"></script>
-
-</head>
-
-
-<body class="bg-light">
-
-<div class="container mt-5">
-
-<h2 class="mb-4">Campañas de Donación</h2>
-
-
-<!-- TABLA CAMPAÑAS -->
-
-<table class="table table-bordered">
-
-<thead class="table-dark">
-
-<tr>
-
-<th>Campaña</th>
-<th>Ubicación</th>
-<th>Fecha</th>
-<th>Status</th>
-<th>Ver Donantes</th>
-
-</tr>
-
-</thead>
-
-<tbody id="tablaCampanas">
-
-</tbody>
-
-</table>
-
-
-
-<!-- DONANTES DE CAMPAÑA -->
-
-<div class="mt-5">
-
-<h3>Donantes registrados</h3>
-
-<table class="table table-striped">
-
-<thead>
-
-<tr>
-
-<th>Nombre</th>
-<th>Email</th>
-<th>Tipo de sangre</th>
-<th>Fecha</th>
-
-</tr>
-
-</thead>
-
-<tbody id="tablaDonantes">
-
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-
-
 <script>
+    let todasLasCampanas = [];
+    let inscritosActuales = [];
+    let campanaSeleccionada = null;
 
-const tablaCampanas = document.getElementById("tablaCampanas");
-const tablaDonantes = document.getElementById("tablaDonantes");
+    // Verificar autenticación
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = "../login/login.html";
+            return;
+        }
+        cargarCampanas();
+    });
 
+    // Cargar todas las campañas
+    async function cargarCampanas() {
+        try {
+            const snapshot = await db.collection("campanas")
+                .orderBy("fecha", "desc")
+                .get();
+            
+            const select = document.getElementById("campanaSelect");
+            select.innerHTML = '<option value="">-- Selecciona una campaña --</option>';
+            
+            if (snapshot.empty) {
+                select.innerHTML += '<option value="" disabled>No hay campañas disponibles</option>';
+                return;
+            }
+            
+            snapshot.forEach(doc => {
+                const campana = { id: doc.id, ...doc.data() };
+                todasLasCampanas.push(campana);
+                
+                const fecha = campana.fecha || "Fecha no disponible";
+                
+                const option = document.createElement("option");
+                option.value = campana.id;
+                option.textContent = `${campana.nombre || "Sin nombre"} - ${fecha} (${campana.lugar || "Sin lugar"})`;
+                select.appendChild(option);
+            });
+            
+        } catch (error) {
+            console.error("Error cargando campañas:", error);
+            alert("Error al cargar campañas");
+        }
+    }
 
-// CARGAR CAMPAÑAS
+    // Cargar inscritos de la campaña seleccionada
+    async function cargarInscritos() {
+        const campanaId = document.getElementById("campanaSelect").value;
+        
+        if (!campanaId) {
+            alert("Selecciona una campaña");
+            return;
+        }
 
-async function cargarCampanas(){
+        // Mostrar spinner
+        document.getElementById("loadingSpinner").style.display = "block";
+        document.getElementById("noSeleccionada").style.display = "none";
+        document.getElementById("tablaContainer").style.display = "none";
+        document.getElementById("infoCampana").style.display = "none";
+        document.getElementById("sinInscritos").style.display = "none";
 
-const snapshot = await db.collection("campanas").get();
+        try {
+            // Obtener datos de la campaña
+            const campanaDoc = await db.collection("campanas").doc(campanaId).get();
+            campanaSeleccionada = { id: campanaDoc.id, ...campanaDoc.data() };
+            
+            // Mostrar info de la campaña
+            document.getElementById("campanaTitulo").innerHTML = `
+                <i class="fas fa-calendar-alt me-2"></i>${campanaSeleccionada.nombre || "Sin nombre"}
+            `;
+            document.getElementById("campanaDetalles").innerHTML = `
+                <strong>Fecha:</strong> ${campanaSeleccionada.fecha || "No especificada"}<br>
+                <strong>Ubicación:</strong> ${campanaSeleccionada.lugar || "No especificada"}
+            `;
+            document.getElementById("infoCampana").style.display = "block";
 
-tablaCampanas.innerHTML = "";
+            // Obtener inscripciones de la campaña
+            const inscripcionesSnapshot = await db.collection("inscripciones")
+                .where("campanaId", "==", campanaId)
+                .get();
 
-snapshot.forEach(doc => {
+            inscritosActuales = [];
 
-const data = doc.data();
+            if (inscripcionesSnapshot.empty) {
+                document.getElementById("loadingSpinner").style.display = "none";
+                document.getElementById("tablaContainer").style.display = "block";
+                document.getElementById("sinInscritos").style.display = "block";
+                document.getElementById("inscritosTableBody").innerHTML = "";
+                return;
+            }
 
-let estado = "Activa";
+            // Procesar cada inscripción y obtener datos del usuario
+            for (const doc of inscripcionesSnapshot.docs) {
+                const inscripcion = doc.data();
+                
+                // Buscar datos del usuario para obtener nombre y tipo de sangre
+                let nombre = "—";
+                let tipoSangre = "—";
+                
+                if (inscripcion.userId) {
+                    const userDoc = await db.collection("users").doc(inscripcion.userId).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        nombre = userData.nombre || "—";
+                        tipoSangre = userData.tipoSangre || "—";
+                    }
+                }
+                
+                inscritosActuales.push({
+                    id: doc.id,
+                    ticket: inscripcion.ticket || "—",
+                    email: inscripcion.userEmail || "—",
+                    nombre: nombre,
+                    tipoSangre: tipoSangre
+                });
+            }
 
-if(data.estado){
-estado = data.estado;
-}
+            // Ordenar por nombre
+            inscritosActuales.sort((a, b) => {
+                if (a.nombre > b.nombre) return 1;
+                if (a.nombre < b.nombre) return -1;
+                return 0;
+            });
 
-tablaCampanas.innerHTML += `
+            // Mostrar tabla de inscritos
+            mostrarInscritos();
+            
+        } catch (error) {
+            console.error("Error cargando inscritos:", error);
+            alert("Error al cargar los inscritos: " + error.message);
+        } finally {
+            document.getElementById("loadingSpinner").style.display = "none";
+        }
+    }
 
-<tr>
+    // Mostrar inscritos en tabla
+    function mostrarInscritos() {
+        const tbody = document.getElementById("inscritosTableBody");
+        const sinInscritos = document.getElementById("sinInscritos");
+        
+        document.getElementById("tablaContainer").style.display = "block";
+        
+        if (inscritosActuales.length === 0) {
+            tbody.innerHTML = "";
+            sinInscritos.style.display = "block";
+            return;
+        }
 
-<td>${data.titulo}</td>
+        sinInscritos.style.display = "none";
 
-<td>${data.ubicacion}</td>
+        let html = "";
 
-<td>${data.fecha?.toDate().toLocaleDateString() || ""}</td>
+        inscritosActuales.forEach((donante, index) => {
+            html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><span class="badge bg-dark">${donante.ticket}</span></td>
+                    <td>${donante.nombre}</td>
+                    <td>${donante.email}</td>
+                    <td><span class="badge bg-danger">${donante.tipoSangre}</span></td>
+                </tr>
+            `;
+        });
 
-<td>
-<span class="badge bg-success">
-${estado}
-</span>
-</td>
+        tbody.innerHTML = html;
+    }
 
-<td>
+    function logout() {
+        auth.signOut().then(() => {
+            window.location.href = "../login/login.html";
+        });
+    }
 
-<button class="btn btn-primary btn-sm"
-onclick="verDonantes('${data.titulo}')">
-
-Ver Donantes
-
-</button>
-
-</td>
-
-</tr>
-
-`;
-
-});
-
-}
-
-
-cargarCampanas();
-
-
-
-// VER DONANTES DE UNA CAMPAÑA
-
-async function verDonantes(tituloCampana){
-
-tablaDonantes.innerHTML = "";
-
-
-const snapshot = await db.collection("inscripciones")
-.where("campana","==", tituloCampana)
-.get();
-
-
-if(snapshot.empty){
-
-tablaDonantes.innerHTML = `
-<tr>
-<td colspan="4">No hay donantes registrados</td>
-</tr>
-`;
-
-return;
-
-}
-
-
-snapshot.forEach(doc => {
-
-const data = doc.data();
-
-tablaDonantes.innerHTML += `
-
-<tr>
-
-<td>${data.nombre}</td>
-
-<td>${data.correo}</td>
-
-<td>${data.tipoSangre}</td>
-
-<td>${data.createdAt?.toDate().toLocaleDateString() || ""}</td>
-
-</tr>
-
-`;
-
-});
-
-}
-
+    // Hacer funciones globales
+    window.cargarInscritos = cargarInscritos;
+    window.logout = logout;
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

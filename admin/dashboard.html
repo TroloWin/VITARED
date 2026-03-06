@@ -1,189 +1,114 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VITARED | Panel Administrativo</title>
 
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../public/css/public.css">
+    <link rel="stylesheet" href="css/admin.css">
 
-<title>VITARED | Panel Administrativo</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="../public/css/public.css">
-<link rel="stylesheet" href="css/admin.css">
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
-
 <body class="admin-body">
 
-
-<!-- SIDEBAR -->
+<!-- SIDEBAR - 5 OPCIONES -->
 <div class="sidebar">
+    <div class="sidebar-header">
+        <img src="../public/images/vitared_logo.png" alt="VITARED">
+        <h3>Admin Panel</h3>
+    </div>
 
-<div class="sidebar-header">
-<img src="../public/images/vitared_logo.png">
-<h3>Admin Panel</h3>
+    <div class="sidebar-nav">
+        <ul>
+            <li>
+                <a href="dashboard.html" class="active">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="gestionar-campanas.html">
+                    <i class="fas fa-calendar-alt"></i> Gestionar Campañas
+                </a>
+            </li>
+            <li>
+                <a href="registro-donantes.html">
+                    <i class="fas fa-user-plus"></i> Registro de Donantes
+                </a>
+            </li>
+            <li>
+                <a href="../index.html" target="_blank">
+                    <i class="fas fa-globe"></i> Ver Página Web
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </li>
+        </ul>
+    </div>
 </div>
-
-
-<div class="sidebar-nav">
-
-<ul>
-
-<li>
-<a href="dashboard.html" class="active">
-<i class="fas fa-home"></i> Dashboard
-</a>
-</li>
-
-<li>
-<a href="gestionar-campanas.html">
-<i class="fas fa-calendar-alt"></i> Gestionar Campañas
-</a>
-</li>
-
-<li>
-<a href="registro-donantes.html">
-<i class="fas fa-user-plus"></i> Registro de Donantes
-</a>
-</li>
-
-<li>
-<a href="../index.html" target="_blank">
-<i class="fas fa-globe"></i> Ver Página Web
-</a>
-</li>
-
-<li>
-<a href="#" onclick="logout()">
-<i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-</a>
-</li>
-
-</ul>
-
-</div>
-
-</div>
-
 
 <!-- MAIN CONTENT -->
 <div class="main-content">
+    <div class="top-bar">
+        <h2>Dashboard</h2>
+    </div>
 
-<div class="top-bar">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5>Total Usuarios</h5>
+                    <h2 id="totalUsuarios">0</h2>
+                </div>
+            </div>
+        </div>
 
-<h2>Dashboard</h2>
-
+        <div class="col-md-6">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>Total Campañas</h5>
+                    <h2 id="totalCampanas">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-
-<div class="row mb-4">
-
-<div class="col-md-6">
-
-<div class="card bg-danger text-white">
-
-<div class="card-body">
-
-<h5>Total Usuarios</h5>
-
-<h2 id="totalUsuarios">0</h2>
-
-</div>
-
-</div>
-
-</div>
-
-
-<div class="col-md-6">
-
-<div class="card bg-success text-white">
-
-<div class="card-body">
-
-<h5>Total Campañas</h5>
-
-<h2 id="totalCampanas">0</h2>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-
-
+<!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <script src="../public/js/firebase-config.js"></script>
-
 <script>
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = "../login/login.html";
+            return;
+        }
+        cargarDashboard();
+    });
 
-let currentUser=null;
+    async function cargarDashboard() {
+        const users = await db.collection("users").get();
+        document.getElementById("totalUsuarios").textContent = users.size;
 
+        const campanas = await db.collection("campanas").get();
+        document.getElementById("totalCampanas").textContent = campanas.size;
+    }
 
-// LOGIN
-auth.onAuthStateChanged(async(user)=>{
-
-if(!user){
-
-window.location.href="../login/login.html";
-return;
-
-}
-
-currentUser=user;
-
-// CARGAR DATOS
-cargarDashboard();
-
-});
-
-
-
-async function cargarDashboard(){
-
-const users=await db.collection("users").get();
-
-document.getElementById("totalUsuarios").textContent=
-users.size;
-
-
-
-const campanas=await db.collection("campanas").get();
-
-document.getElementById("totalCampanas").textContent=
-campanas.size;
-
-}
-
-
-
-function logout(){
-
-auth.signOut().then(()=>{
-
-window.location.href="../login/login.html";
-
-});
-
-}
-
+    function logout() {
+        auth.signOut().then(() => {
+            window.location.href = "../login/login.html";
+        });
+    }
 </script>
 
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>
-```

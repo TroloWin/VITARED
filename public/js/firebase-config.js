@@ -360,6 +360,129 @@ async function eliminarCampana(campanaId) {
 }
 
 // ===========================================
+// FUNCIONES DE INSCRIPCIONES (NUEVAS)
+// ===========================================
+
+/**
+ * REGISTRAR INSCRIPCIÓN A CAMPAÑA (formulario público)
+ * @param {Object} datos - Datos del formulario de inscripción
+ * @returns {Promise<Object>} Resultado de la operación
+ */
+async function registrarInscripcion(datos) {
+    try {
+        const inscripcion = {
+            nombre: datos.nombre,
+            correo: datos.correo,
+            telefono: datos.telefono,
+            tipoSangre: datos.tipoSangre,
+            edad: datos.edad,
+            peso: datos.peso,
+            campana: datos.campana,
+            fechaDisponible: datos.fechaDisponible,
+            comentarios: datos.comentarios || "",
+            estado: "pendiente",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        await db.collection("inscripciones").add(inscripcion);
+        console.log("✅ Inscripción guardada correctamente");
+
+        return { success: true };
+    } catch (error) {
+        console.error("❌ Error guardando inscripción:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * OBTENER INSCRIPCIONES POR CAMPAÑA (para admin)
+ * @param {string} campanaId - ID de la campaña (opcional)
+ * @returns {Promise<Array>} Lista de inscripciones
+ */
+async function obtenerInscripciones(campanaId = null) {
+    try {
+        let query = db.collection('inscripciones').orderBy('createdAt', 'desc');
+        
+        if (campanaId) {
+            query = query.where('campana', '==', campanaId);
+        }
+        
+        const snapshot = await query.get();
+        const inscripciones = [];
+        
+        snapshot.forEach(doc => {
+            inscripciones.push({ id: doc.id, ...doc.data() });
+        });
+        
+        console.log(`✅ Se encontraron ${inscripciones.length} inscripciones`);
+        return inscripciones;
+    } catch (error) {
+        console.error("❌ Error obteniendo inscripciones:", error);
+        return [];
+    }
+}
+
+/**
+ * ACTUALIZAR ESTADO DE INSCRIPCIÓN (admin)
+ * @param {string} inscripcionId - ID de la inscripción
+ * @param {string} estado - Nuevo estado
+ * @returns {Promise<Object>} Resultado de la operación
+ */
+async function actualizarEstadoInscripcion(inscripcionId, estado) {
+    try {
+        await db.collection('inscripciones').doc(inscripcionId).update({
+            estado: estado,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        return { success: true };
+    } catch (error) {
+        console.error("❌ Error actualizando inscripción:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * OBTENER INSCRIPCIONES CON DATOS DE CAMPAÑA (para admin)
+ * @returns {Promise<Array>} Lista de inscripciones con info de campaña
+ */
+async function obtenerInscripcionesConCampana() {
+    try {
+        const inscripcionesSnapshot = await db.collection('inscripciones')
+            .orderBy('createdAt', 'desc')
+            .get();
+        
+        const resultados = [];
+        
+        for (const doc of inscripcionesSnapshot.docs) {
+            const inscripcion = { id: doc.id, ...doc.data() };
+            
+            // Buscar información de la campaña si existe
+            if (inscripcion.campana) {
+                const campanaDoc = await db.collection('campanas')
+                    .where('titulo', '==', inscripcion.campana)
+                    .limit(1)
+                    .get();
+                
+                if (!campanaDoc.empty) {
+                    inscripcion.campanaData = {
+                        id: campanaDoc.docs[0].id,
+                        ...campanaDoc.docs[0].data()
+                    };
+                }
+            }
+            
+            resultados.push(inscripcion);
+        }
+        
+        return resultados;
+    } catch (error) {
+        console.error("❌ Error obteniendo inscripciones con campaña:", error);
+        return [];
+    }
+}
+
+// ===========================================
 // FUNCIONES DE CENTROS Y CITAS
 // ===========================================
 
@@ -378,7 +501,8 @@ async function obtenerCentrosDonacion() {
         // Si no hay centros, devolver algunos por defecto
         if (centros.length === 0) {
             return [
-                { id: 'centro-transfusion',
+                { 
+                    id: 'centro-transfusion',
                     nombre: 'Centro Estatal de la Transfusión Sanguínea CETS Durango',
                     direccion: 'Blvd. José María Patoni 403, El Ciprés 2, 34217 Durango, Dgo.',
                     telefono: '618-137-3160',
@@ -591,7 +715,50 @@ async function recuperarUsuarioEnFirestore() {
     }
 }
 
-
+// ===========================================
+// CREAR PRIMER ADMIN (solo usar una vez)
+// ===========================================
+async function crearPrimerAdmin() {
+    try {
+        // Verificar si ya existe un admin
+        const snapshot = await db.collection('users')
+            .where('esAdmin', '==', true)
+            .limit(1)
+            .get();
+        
+        if (!snapshot.empty) {
+            console.log("✅ Ya existe un administrador");
+            return { success: true, message: "Admin ya existe" };
+        }
+        
+        // Crear admin
+        const userCredential = await auth.createUserWithEmailAndPassword('admin@vitared.com', 'Admin123!');
+        const user = userCredential.user;
+        
+        await user.updateProfile({ displayName: 'Administrador' });
+        
+        await db.collection('users').doc(user.uid).set({
+            nombre: 'Administrador',
+            email: 'admin@vitared.com',
+            telefono: '6181234567',
+            fechaNacimiento: '1990-01-01',
+            peso: 70,
+            tipoSangre: 'O+',
+            localidad: 'Durango',
+            esAdmin: true,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log("✅ Admin creado exitosamente:", user.uid);
+        console.log("📧 Email: admin@vitared.com");
+        console.log("🔑 Contraseña: Admin123!");
+        
+        return { success: true, userId: user.uid };
+    } catch (error) {
+        console.error("❌ Error creando admin:", error);
+        return { success: false, error: error.message };
+    }
+}
 
 // ===========================================
 // CONTROL DE ACCESO POR ROL
@@ -649,41 +816,6 @@ auth.onAuthStateChanged(async (user) => {
         }
     }
 });
-// ===========================================
-// INSCRIPCIÓN A CAMPAÑAS (FORMULARIO DONACIÓN)
-// ===========================================
-
-async function registrarInscripcion(datos) {
-    try {
-
-        const inscripcion = {
-            nombre: datos.nombre,
-            correo: datos.correo,
-            telefono: datos.telefono,
-            tipoSangre: datos.tipoSangre,
-            edad: datos.edad,
-            peso: datos.peso,
-            campana: datos.campana,
-            fechaDisponible: datos.fechaDisponible,
-            comentarios: datos.comentarios || "",
-            estado: "pendiente",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        await db.collection("inscripciones").add(inscripcion);
-
-        console.log("✅ Inscripción guardada correctamente");
-
-        return { success: true };
-
-    } catch (error) {
-
-        console.error("❌ Error guardando inscripción:", error);
-
-        return { success: false, error: error.message };
-
-    }
-}
 
 // ===========================================
 // EXPORTAR FUNCIONES GLOBALES
@@ -705,5 +837,9 @@ window.registrarDonacion = registrarDonacion;
 window.recuperarUsuarioEnFirestore = recuperarUsuarioEnFirestore;
 window.crearPrimerAdmin = crearPrimerAdmin;
 window.registrarInscripcion = registrarInscripcion;
+window.obtenerInscripciones = obtenerInscripciones;
+window.actualizarEstadoInscripcion = actualizarEstadoInscripcion;
+window.obtenerInscripcionesConCampana = obtenerInscripcionesConCampana;
 
 console.log("✅ Firebase config cargado correctamente");
+console.log("📦 Funciones disponibles:", Object.keys(window).filter(k => k.startsWith('obtener') || k.startsWith('registrar') || k.startsWith('actualizar') || k.startsWith('eliminar') || k.startsWith('crear')));
