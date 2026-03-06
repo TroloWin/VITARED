@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>VITARED | Gestionar Campañas</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="../public/css/public.css">
-<link rel="stylesheet" href="css/admin.css">
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -16,212 +16,88 @@
 
 </head>
 
-<body class="admin-body">
+<body class="p-4">
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-
-<div class="sidebar-header">
-<img src="../public/images/vitared_logo.png">
-<h3>Admin Panel</h3>
-</div>
-
-<div class="sidebar-nav">
-<ul>
-
-<li>
-<a href="dashboard.html">
-<i class="fas fa-home"></i> Dashboard
-</a>
-</li>
-
-<li>
-<a href="gestionar-campanas.html" class="active">
-<i class="fas fa-calendar-alt"></i> Gestionar Campañas
-</a>
-</li>
-
-<li>
-<a href="registro-donantes-campana.html">
-<i class="fas fa-user-plus"></i> Registro Donantes
-</a>
-</li>
-
-<li>
-<a href="#" onclick="logout()">
-<i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-</a>
-</li>
-
-</ul>
-</div>
-</div>
-
-
-<!-- MAIN -->
-<div class="main-content">
-
-<div class="top-bar">
 <h2>Gestionar Campañas</h2>
-</div>
 
-
-<!-- FORMULARIO -->
-
-<div class="card shadow mb-4">
-
-<div class="card-header bg-danger text-white">
-<h5 class="mb-0">Crear / Editar Campaña</h5>
-</div>
-
-<div class="card-body">
-
-<form id="campanaForm">
+<form id="campanaForm" class="mb-4">
 
 <input type="hidden" id="campanaId">
-<input type="hidden" id="imagenActual">
 
 <div class="row">
 
-<div class="col-md-4 mb-3">
+<div class="col-md-4">
 <label>Nombre</label>
-<input type="text" id="nombreCampana" class="form-control" required>
+<input class="form-control" id="nombreCampana" required>
 </div>
 
-<div class="col-md-4 mb-3">
+<div class="col-md-4">
 <label>Lugar</label>
-<input type="text" id="lugarCampana" class="form-control" required>
+<input class="form-control" id="lugarCampana" required>
 </div>
 
-<div class="col-md-4 mb-3">
+<div class="col-md-4">
 <label>Fecha</label>
-<input type="date" id="fechaCampana" class="form-control" required>
+<input type="date" class="form-control" id="fechaCampana">
 </div>
 
-<div class="col-md-12 mb-3">
-<label>Descripción</label>
-<textarea id="descripcionCampana" class="form-control"></textarea>
+<div class="col-md-6 mt-3">
+<label>Nombre de imagen</label>
+<input class="form-control" id="imagenCampana" placeholder="ejemplo.jpg">
 </div>
 
-<div class="col-md-6 mb-3">
-<label>Subir Imagen</label>
-<input type="file" id="imagenCampana" class="form-control" accept="image/*">
-</div>
-
-<div class="col-md-6 mb-3">
-<label>Vista previa</label>
-<br>
-<img id="previewImagen" src="" style="width:120px;border-radius:8px">
-</div>
-
-<div class="col-md-4 mb-3">
+<div class="col-md-6 mt-3">
 <label>Status</label>
-<select id="statusCampana" class="form-select">
+
+<select class="form-select" id="statusCampana">
+
 <option value="activa">Activa</option>
 <option value="inactiva">Inactiva</option>
 <option value="finalizada">Finalizada</option>
+
 </select>
-</div>
 
 </div>
 
-<button type="submit" class="btn btn-danger">
+</div>
+
+<button class="btn btn-danger mt-3">
 Guardar Campaña
-</button>
-
-<button type="button" class="btn btn-secondary" onclick="limpiarFormulario()">
-Cancelar
 </button>
 
 </form>
 
-</div>
-</div>
-
-
-<!-- TABLA -->
-
-<div class="card shadow">
-
-<div class="card-header bg-danger text-white">
-<h5 class="mb-0">Lista de Campañas</h5>
-</div>
-
-<div class="card-body">
-
-<div class="table-responsive">
+<hr>
 
 <table class="table">
 
 <thead>
+
 <tr>
+
 <th>Imagen</th>
 <th>Nombre</th>
 <th>Lugar</th>
 <th>Fecha</th>
 <th>Status</th>
-<th>Acciones</th>
+<th></th>
+
 </tr>
+
 </thead>
 
-<tbody id="tablaCampanas">
-<tr>
-<td colspan="6" class="text-center">Cargando...</td>
-</tr>
-</tbody>
+<tbody id="tablaCampanas"></tbody>
 
 </table>
 
-</div>
-</div>
-</div>
 
-</div>
-
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script src="../public/js/firebase-config.js"></script>
 
-
 <script>
-
-let imagenBase64=""
-
-document.getElementById("imagenCampana").addEventListener("change",function(){
-
-const file=this.files[0]
-
-if(!file) return
-
-const reader=new FileReader()
-
-reader.onload=function(e){
-
-imagenBase64=e.target.result
-document.getElementById("previewImagen").src=imagenBase64
-
-}
-
-reader.readAsDataURL(file)
-
-})
-
-
 
 async function cargarCampanas(){
 
 const snapshot=await db.collection("campanas").get()
-
-const tabla=document.getElementById("tablaCampanas")
-
-if(snapshot.empty){
-
-tabla.innerHTML=`<tr>
-<td colspan="6" class="text-center">No hay campañas</td>
-</tr>`
-
-return
-}
 
 let html=""
 
@@ -229,52 +105,41 @@ snapshot.forEach(doc=>{
 
 const c=doc.data()
 
-let fecha="-"
+let badge="warning"
 
-if(c.fecha){
-
-fecha=c.fecha.toDate
-? c.fecha.toDate().toLocaleDateString()
-: c.fecha
-
-}
+if(c.status=="activa") badge="success"
+if(c.status=="finalizada") badge="secondary"
 
 html+=`
 
 <tr>
 
 <td>
-<img src="${c.imagen || 'https://via.placeholder.com/60'}"
-style="width:60px;height:60px;object-fit:cover;border-radius:8px">
+<img src="../public/images/${c.imagen}" width="70">
 </td>
 
-<td>${c.nombre || "-"}</td>
+<td>${c.nombre}</td>
 
-<td>${c.lugar || "-"}</td>
+<td>${c.lugar}</td>
 
-<td>${fecha}</td>
+<td>${c.fecha}</td>
 
 <td>
-<span class="badge bg-${
-c.status=="activa"
-?"success"
-:c.status=="finalizada"
-?"secondary"
-:"warning"}">
 
-${c.status || "inactiva"}
-
+<span class="badge bg-${badge}">
+${c.status}
 </span>
+
 </td>
 
 <td>
 
-<button class="btn btn-sm btn-primary"
+<button class="btn btn-primary btn-sm"
 onclick="editarCampana('${doc.id}')">
 Editar
 </button>
 
-<button class="btn btn-sm btn-danger"
+<button class="btn btn-danger btn-sm"
 onclick="eliminarCampana('${doc.id}')">
 Eliminar
 </button>
@@ -287,28 +152,25 @@ Eliminar
 
 })
 
-tabla.innerHTML=html
+tablaCampanas.innerHTML=html
 
 }
 
 
 
-document.getElementById("campanaForm").addEventListener("submit",async(e)=>{
+campanaForm.addEventListener("submit",async e=>{
 
 e.preventDefault()
 
-const id=document.getElementById("campanaId").value
-
-let imagenFinal=imagenBase64 || document.getElementById("imagenActual").value
+const id=campanaId.value
 
 const datos={
 
-nombre:document.getElementById("nombreCampana").value,
-lugar:document.getElementById("lugarCampana").value,
-fecha:document.getElementById("fechaCampana").value,
-descripcion:document.getElementById("descripcionCampana").value,
-imagen:imagenFinal,
-status:document.getElementById("statusCampana").value
+nombre:nombreCampana.value,
+lugar:lugarCampana.value,
+fecha:fechaCampana.value,
+imagen:imagenCampana.value,
+status:statusCampana.value
 
 }
 
@@ -322,7 +184,8 @@ await db.collection("campanas").add(datos)
 
 }
 
-limpiarFormulario()
+campanaForm.reset()
+campanaId.value=""
 
 cargarCampanas()
 
@@ -330,27 +193,25 @@ cargarCampanas()
 
 
 
-window.editarCampana=async(id)=>{
+async function editarCampana(id){
 
 const doc=await db.collection("campanas").doc(id).get()
 
 const c=doc.data()
 
-document.getElementById("campanaId").value=id
-document.getElementById("nombreCampana").value=c.nombre || ""
-document.getElementById("lugarCampana").value=c.lugar || ""
-document.getElementById("fechaCampana").value=c.fecha || ""
-document.getElementById("descripcionCampana").value=c.descripcion || ""
-document.getElementById("statusCampana").value=c.status || "inactiva"
+campanaId.value=id
 
-document.getElementById("imagenActual").value=c.imagen || ""
-document.getElementById("previewImagen").src=c.imagen || ""
+nombreCampana.value=c.nombre
+lugarCampana.value=c.lugar
+fechaCampana.value=c.fecha
+imagenCampana.value=c.imagen
+statusCampana.value=c.status
 
 }
 
 
 
-window.eliminarCampana=async(id)=>{
+async function eliminarCampana(id){
 
 if(!confirm("¿Eliminar campaña?")) return
 
@@ -362,35 +223,9 @@ cargarCampanas()
 
 
 
-function limpiarFormulario(){
-
-document.getElementById("campanaForm").reset()
-
-document.getElementById("campanaId").value=""
-document.getElementById("imagenActual").value=""
-document.getElementById("previewImagen").src=""
-
-imagenBase64=""
-
-}
-
-
-
-window.logout=()=>{
-
-auth.signOut()
-window.location.href="../index.html"
-
-}
-
-
-
 cargarCampanas()
 
 </script>
-
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
