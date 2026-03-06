@@ -380,7 +380,7 @@ async function obtenerCentrosDonacion() {
             return [
                 { id: 'centro-transfusion',
                     nombre: 'Centro Estatal de la Transfusión Sanguínea CETS Durango',
-                    direccion: 'Blvd. José María Patoni 403, 34217 Durango, Durango',
+                    direccion: 'Blvd. José María Patoni 403, El Ciprés 2, 34217 Durango, Dgo.',
                     telefono: '618-137-3160',
                     horario: 'Lun-Vie 8am-6pm'
                 }
