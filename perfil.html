@@ -17,7 +17,6 @@
 </head>
 <body>
 
-
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg shadow-sm sticky-top">
 <div class="container py-2">
@@ -46,14 +45,10 @@
 
 
 <section class="perfil-section py-5">
-
 <div class="container">
-
 <div class="row g-4">
 
-
 <!-- PERFIL IZQUIERDA -->
-
 <div class="col-lg-4">
 
 <div class="card shadow perfil-card border-0 text-center p-4">
@@ -64,7 +59,6 @@
 
 <h4 id="profileName" class="mt-3">Cargando...</h4>
 <p class="text-muted" id="profileEmail"></p>
-
 
 <div class="perfil-info">
 
@@ -85,7 +79,6 @@
 
 </div>
 
-
 <div class="d-grid gap-2 mt-4">
 
 <button class="btn btn-outline-danger" onclick="enableEditMode()">
@@ -99,13 +92,10 @@
 </div>
 
 </div>
-
 </div>
 
 
-
 <!-- TARJETA DERECHO -->
-
 <div class="col-lg-8">
 
 <div class="card shadow border-0 p-4 mb-4">
@@ -115,48 +105,50 @@
 <div class="row">
 
 <div class="col-md-6 mb-3">
-
 <div class="info-item">
 <span>⚡ Puede donar</span>
 <strong id="profilePuedeDonar">—</strong>
 </div>
-
 </div>
 
 <div class="col-md-6 mb-3">
-
 <div class="info-item">
 <span>📅 Próxima donación a partir de</span>
 <strong id="profileProximaDonacion">—</strong>
 </div>
-
 </div>
 
 <div class="col-md-6 mb-3">
-
 <div class="info-item">
 <span>🏥 Donaciones</span>
 <strong id="profileDonaciones">0</strong>
 </div>
-
 </div>
 
 <div class="col-md-6 mb-3">
-
 <div class="info-item">
 <span>❤️ Vidas salvadas</span>
 <strong id="profileVidas">0</strong>
 </div>
-
 </div>
 
+</div>
+</div>
+
+
+<!-- INSCRIPCIONES -->
+<div class="card shadow border-0 p-4 mb-4">
+
+<h4 class="text-danger mb-3">Mis Inscripciones</h4>
+
+<div id="inscripcionesContainer">
+<p class="text-muted">Cargando inscripciones...</p>
 </div>
 
 </div>
 
 
 <!-- HISTORIAL -->
-
 <div class="card shadow border-0 p-4">
 
 <h4 class="text-danger mb-3">Historial de Donaciones</h4>
@@ -168,13 +160,9 @@
 </div>
 
 </div>
-
 </div>
-
 </div>
-
 </section>
-
 
 
 <footer>
@@ -183,7 +171,6 @@
 
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
 
 <style>
 
@@ -217,7 +204,6 @@ border-bottom:1px solid #eee;
 
 <script src="public/js/firebase-config.js"></script>
 
-
 <script>
 
 let currentUser=null;
@@ -235,10 +221,12 @@ currentUser=user;
 
 loadUserProfile();
 loadDonaciones();
+loadInscripciones();
 
 });
 
 
+/* PERFIL */
 
 async function loadUserProfile(){
 
@@ -260,11 +248,7 @@ document.getElementById('profileBloodType').textContent=userData.tipoSangre || '
 const donaciones=userData.donacionesRealizadas || 0;
 
 document.getElementById('profileDonaciones').textContent=donaciones;
-
 document.getElementById('profileVidas').textContent=donaciones*3;
-
-
-/* PROXIMA DONACION SEGUN SEXO */
 
 let dias=56;
 
@@ -278,7 +262,6 @@ let proximaTexto="Disponible ahora";
 if(userData.ultimaDonacion){
 
 let ultima=userData.ultimaDonacion.toDate();
-
 let proxima=new Date(ultima);
 
 proxima.setDate(proxima.getDate()+dias);
@@ -298,7 +281,6 @@ document.getElementById('profilePuedeDonar').innerHTML=puedeDonar
 ? '<span class="badge bg-success">Sí puede donar</span>'
 : '<span class="badge bg-danger">No puede donar</span>';
 
-
 document.getElementById('userAvatarLarge').textContent=(userData.nombre || 'U').charAt(0).toUpperCase();
 
 }
@@ -306,154 +288,46 @@ document.getElementById('userAvatarLarge').textContent=(userData.nombre || 'U').
 }
 
 
+/* INSCRIPCIONES */
 
-/* EDITAR PERFIL */
+async function loadInscripciones(){
 
-function enableEditMode(){
+const container=document.getElementById("inscripcionesContainer");
 
-document.getElementById('profileName').innerHTML =
-`<input type="text" id="editNombre" class="form-control" value="${userData.nombre || ''}">`;
-
-document.getElementById('profileLocation').innerHTML =
-`<input type="text" id="editLocalidad" class="form-control" value="${userData.localidad || ''}">`;
-
-document.getElementById('profilePhone').innerHTML =
-`<input type="text" id="editTelefono" class="form-control" value="${userData.telefono || ''}">`;
-
-document.getElementById('profileBloodType').innerHTML =
-
-`<select id="editTipoSangre" class="form-control">
-
-<option value="">Seleccionar</option>
-<option ${userData.tipoSangre=="A+"?"selected":""}>A+</option>
-<option ${userData.tipoSangre=="A-"?"selected":""}>A-</option>
-<option ${userData.tipoSangre=="B+"?"selected":""}>B+</option>
-<option ${userData.tipoSangre=="B-"?"selected":""}>B-</option>
-<option ${userData.tipoSangre=="AB+"?"selected":""}>AB+</option>
-<option ${userData.tipoSangre=="AB-"?"selected":""}>AB-</option>
-<option ${userData.tipoSangre=="O+"?"selected":""}>O+</option>
-<option ${userData.tipoSangre=="O-"?"selected":""}>O-</option>
-
-</select>`;
-
-
-const btnContainer=document.querySelector('.perfil-card .d-grid');
-
-btnContainer.innerHTML=`
-
-<button class="btn btn-success" onclick="saveProfile()">
-<i class="fas fa-save me-2"></i>Guardar Cambios
-</button>
-
-<button class="btn btn-secondary" onclick="cancelEdit()">
-Cancelar
-</button>
-
-<button class="btn btn-danger" onclick="logout()">
-Cerrar Sesión
-</button>
-
-`;
-
-}
-
-
-
-/* GUARDAR PERFIL */
-
-async function saveProfile(){
-
-const nombre=document.getElementById('editNombre').value.trim();
-const localidad=document.getElementById('editLocalidad').value.trim();
-const telefono=document.getElementById('editTelefono').value.trim();
-const tipoSangre=document.getElementById('editTipoSangre').value;
-
-
-/* VALIDACION TELEFONO */
-
-const phoneRegex=/^[0-9]{10}$/;
-
-if(!phoneRegex.test(telefono)){
-alert("El teléfono debe tener 10 dígitos");
-return;
-}
-
-
-/* GUARDAR EN FIRESTORE */
-
-await userDocRef.update({
-
-nombre:nombre,
-localidad:localidad,
-telefono:telefono,
-tipoSangre:tipoSangre
-
-});
-
-
-/* ACTUALIZAR NOMBRE EN AUTH */
-
-await currentUser.updateProfile({
-displayName:nombre
-});
-
-
-alert("Perfil actualizado correctamente");
-
-loadUserProfile();
-
-location.reload();
-
-}
-
-
-
-/* CANCELAR EDICION */
-
-function cancelEdit(){
-
-loadUserProfile();
-
-location.reload();
-
-}
-
-
-
-/* HISTORIAL DONACIONES */
-
-async function loadDonaciones(){
-
-const container=document.getElementById('donacionesContainer');
-
-const snapshot=await db.collection('donaciones')
-.where('userId','==',currentUser.uid)
-.orderBy('fecha','desc')
-.limit(10)
+const snapshot=await db.collection("inscripciones")
+.where("userId","==",currentUser.uid)
+.orderBy("fechaRegistro","desc")
 .get();
 
 if(snapshot.empty){
 
-container.innerHTML='<p class="text-muted">No tienes donaciones registradas</p>';
+container.innerHTML='<p class="text-muted">No estás inscrito en campañas</p>';
 return;
 
 }
 
-let html='<div class="list-group">';
+let html='<div class="row">';
 
 snapshot.forEach(doc=>{
 
-const d=doc.data();
-const fecha=d.fecha?.toDate?.().toLocaleDateString() || '—';
+const i=doc.data();
 
 html+=`
 
-<div class="list-group-item d-flex justify-content-between">
+<div class="col-md-6 mb-3">
 
-<div>
+<div class="card border-danger shadow-sm">
 
-<strong>📅 ${fecha}</strong>
-<p class="mb-0">Cantidad: ${d.cantidad || '450ml'}</p>
+<div class="card-body">
+
+<h5 class="text-danger">${i.campanaNombre}</h5>
+
+<p><strong>🎫 Ticket:</strong> ${i.ticket}</p>
+<p><strong>📍 Lugar:</strong> ${i.lugar}</p>
+<p><strong>📅 Fecha:</strong> ${i.fecha}</p>
+<p><strong>⏰ Hora:</strong> ${i.hora || "Asignada en el centro"}</p>
+
+</div>
 
 </div>
 
@@ -470,18 +344,110 @@ container.innerHTML=html;
 }
 
 
+/* INSCRIPCIONES */
+
+async function loadInscripciones(){
+
+const container=document.getElementById("inscripcionesContainer");
+
+try{
+
+const snapshot=await db
+.collection("inscripciones")
+.where("userId","==",currentUser.uid)
+.get();
+
+if(snapshot.empty){
+
+container.innerHTML=`<p class="text-muted">No tienes inscripciones todavía</p>`;
+return;
+
+}
+
+container.innerHTML="";
+
+snapshot.forEach(doc=>{
+
+const data=doc.data();
+
+container.innerHTML+=`
+
+<div class="card mb-2 p-3 border">
+
+<strong>${data.campanaNombre || "Campaña"}</strong><br>
+<span class="text-muted">${data.fecha || ""}</span>
+
+</div>
+
+`;
+
+});
+
+}catch(e){
+
+container.innerHTML=`<p class="text-danger">Error al cargar inscripciones</p>`;
+
+}
+
+}
+
+
+
+/* HISTORIAL DONACIONES */
+
+async function loadDonaciones(){
+
+const container=document.getElementById("donacionesContainer");
+
+try{
+
+const snapshot=await db
+.collection("donaciones")
+.where("userId","==",currentUser.uid)
+.get();
+
+if(snapshot.empty){
+
+container.innerHTML=`<p class="text-muted">Aún no tienes donaciones registradas</p>`;
+return;
+
+}
+
+container.innerHTML="";
+
+snapshot.forEach(doc=>{
+
+const data=doc.data();
+
+container.innerHTML+=`
+
+<div class="card mb-2 p-3 border">
+
+<strong>Donación realizada</strong><br>
+<span class="text-muted">${data.fecha || ""}</span>
+
+</div>
+
+`;
+
+});
+
+}catch(e){
+
+container.innerHTML=`<p class="text-danger">Error al cargar historial</p>`;
+
+}
+
+}
 
 /* LOGOUT */
 
 window.logout=()=>{
-
 auth.signOut();
 window.location.href='index.html';
-
 };
 
 </script>
-
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
