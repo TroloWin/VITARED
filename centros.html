@@ -151,10 +151,6 @@ ${centro.telefono || '—'}
 ${centro.horario || 'Lun-Vie 9am-5pm'}
 </p>
 
-<button class="btn btn-outline-danger"
-onclick="verDisponibilidad('${centro.id}')">
-Ver disponibilidad
-</button>
 
 </div>
 </div>
@@ -192,9 +188,19 @@ function iniciarMapa() {
     });
 
     L.marker([lat, lon], {icon: redIcon})
-        .addTo(map)
-        .bindPopup("Centro Estatal de la Transfusión Sanguínea (CETS) Durango")
-        .openPopup();
+    .addTo(map)
+    .bindPopup(`
+        <b>Centro Estatal de la Transfusión Sanguínea (CETS) Durango</b>
+        <br><br>
+        <a 
+        href="https://www.google.com/maps/dir/?api=1&destination=24.05781389373726,-104.643585489177"
+        target="_blank"
+        class="btn btn-danger btn-sm">
+        Cómo llegar
+        </a>
+    `)
+    .openPopup();
+
 
     
     setTimeout(() => {
