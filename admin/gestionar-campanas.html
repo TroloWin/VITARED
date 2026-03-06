@@ -91,6 +91,11 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Cupo Máximo de Donantes</label>
+                        <input type="number" class="form-control" id="cupoCampana" min="1" value="50" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
                         <label class="form-label fw-semibold">Status</label>
                         <select class="form-select" id="statusCampana">
                             <option value="activa">Activa</option>
@@ -112,20 +117,21 @@
         </div>
     </div>
 
-    <!-- TABLA -->
+    <!-- TABLA DE CAMPAÑAS -->
     <div class="card shadow">
         <div class="card-header bg-danger text-white">
             <h5 class="mb-0"><i class="fas fa-list me-2"></i>Lista de Campañas</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-striped table-hover">
                     <thead>
                         <tr>
                             <th>Imagen</th>
                             <th>Nombre</th>
                             <th>Lugar</th>
                             <th>Fecha</th>
+                            <th>Cupo</th>
                             <th>Status</th>
                             <th>Acciones</th>
                         </tr>
@@ -142,6 +148,9 @@
 
 <script src="../public/js/firebase-config.js"></script>
 <script>
+    let todasLasCampanas = [];
+
+    // VERIFICAR AUTENTICACIÓN
     auth.onAuthStateChanged((user) => {
         if (!user) {
             window.location.href = "../login/login.html";
@@ -150,40 +159,74 @@
         cargarCampanas();
     });
 
+    // CARGAR CAMPAÑAS
     async function cargarCampanas() {
-        const snapshot = await db.collection("campanas").get();
-        const tabla = document.getElementById("tablaCampanas");
-        let html = "";
+        try {
+            const snapshot = await db.collection("campanas")
+                .orderBy("fecha", "desc")
+                .get();
 
-        if (snapshot.empty) {
-            tabla.innerHTML = '<tr><td colspan="6" class="text-center">No hay campañas</td></tr>';
-            return;
+            const tabla = document.getElementById("tablaCampanas");
+            let html = "";
+
+            if (snapshot.empty) {
+                tabla.innerHTML = '<tr><td colspan="7" class="text-center">No hay campañas</td></tr>';
+                return;
+            }
+
+            // Para cada campaña, contar inscritos
+            for (const doc of snapshot.docs) {
+                const c = doc.data();
+                const campanaId = doc.id;
+                
+                // Contar inscritos
+                const inscritosSnap = await db.collection("inscripciones")
+                    .where("campanaId", "==", campanaId)
+                    .get();
+                
+                const cupoActual = inscritosSnap.size;
+                
+                let badge = c.status == "activa" ? "success" : 
+                           c.status == "finalizada" ? "secondary" : "warning";
+
+                html += `
+                    <tr>
+                        <td>
+                            <img src="../public/images/${c.imagen || 'campana-default.jpg'}" 
+                                 width="50" height="50" 
+                                 style="object-fit:cover; border-radius:5px;">
+                        </td>
+                        <td>${c.nombre || ''}</td>
+                        <td>${c.lugar || ''}</td>
+                        <td>${c.fecha || ''}</td>
+                        <td>
+                            ${cupoActual}/${c.cupoMaximo || 50}
+                            ${cupoActual >= (c.cupoMaximo || 50) ? 
+                                '<span class="badge bg-danger ms-1">Lleno</span>' : ''}
+                        </td>
+                        <td><span class="badge bg-${badge}">${c.status || 'pendiente'}</span></td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="editarCampana('${campanaId}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarCampana('${campanaId}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            tabla.innerHTML = html;
+        } catch (error) {
+            console.error("Error cargando campañas:", error);
         }
-
-        snapshot.forEach(doc => {
-            const c = doc.data();
-            let badge = c.status == "activa" ? "success" : c.status == "finalizada" ? "secondary" : "warning";
-
-            html += `
-                <tr>
-                    <td><img src="../public/images/${c.imagen || 'campana-default.jpg'}" width="50" height="50" style="object-fit:cover; border-radius:5px;"></td>
-                    <td>${c.nombre || ''}</td>
-                    <td>${c.lugar || ''}</td>
-                    <td>${c.fecha || ''}</td>
-                    <td><span class="badge bg-${badge}">${c.status || 'pendiente'}</span></td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" onclick="editarCampana('${doc.id}')"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-danger btn-sm" onclick="eliminarCampana('${doc.id}')"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-
-        tabla.innerHTML = html;
     }
 
+    // GUARDAR CAMPAÑA
     document.getElementById("campanaForm").addEventListener("submit", async e => {
         e.preventDefault();
+
         const id = document.getElementById("campanaId").value;
         const datos = {
             nombre: document.getElementById("nombreCampana").value,
@@ -191,43 +234,80 @@
             fecha: document.getElementById("fechaCampana").value,
             imagen: document.getElementById("imagenCampana").value,
             status: document.getElementById("statusCampana").value,
-            descripcion: document.getElementById("descripcionCampana").value || ""
+            descripcion: document.getElementById("descripcionCampana").value || "",
+            cupoMaximo: parseInt(document.getElementById("cupoCampana").value) || 50
         };
 
-        if (id) {
-            await db.collection("campanas").doc(id).update(datos);
-        } else {
-            await db.collection("campanas").add(datos);
-        }
+        try {
+            if (id) {
+                await db.collection("campanas").doc(id).update(datos);
+            } else {
+                await db.collection("campanas").add(datos);
+            }
 
-        document.getElementById("campanaForm").reset();
-        document.getElementById("campanaId").value = "";
-        cargarCampanas();
+            document.getElementById("campanaForm").reset();
+            document.getElementById("campanaId").value = "";
+            cargarCampanas();
+
+        } catch (error) {
+            console.error("Error guardando campaña:", error);
+            alert("Error al guardar la campaña");
+        }
     });
 
+    // EDITAR CAMPAÑA
     window.editarCampana = async (id) => {
-        const doc = await db.collection("campanas").doc(id).get();
-        const c = doc.data();
-        document.getElementById("campanaId").value = id;
-        document.getElementById("nombreCampana").value = c.nombre || "";
-        document.getElementById("lugarCampana").value = c.lugar || "";
-        document.getElementById("fechaCampana").value = c.fecha || "";
-        document.getElementById("imagenCampana").value = c.imagen || "";
-        document.getElementById("statusCampana").value = c.status || "activa";
-        document.getElementById("descripcionCampana").value = c.descripcion || "";
+        try {
+            const doc = await db.collection("campanas").doc(id).get();
+            const c = doc.data();
+
+            document.getElementById("campanaId").value = id;
+            document.getElementById("nombreCampana").value = c.nombre || "";
+            document.getElementById("lugarCampana").value = c.lugar || "";
+            document.getElementById("fechaCampana").value = c.fecha || "";
+            document.getElementById("imagenCampana").value = c.imagen || "";
+            document.getElementById("statusCampana").value = c.status || "activa";
+            document.getElementById("descripcionCampana").value = c.descripcion || "";
+            document.getElementById("cupoCampana").value = c.cupoMaximo || 50;
+
+        } catch (error) {
+            console.error("Error editando campaña:", error);
+            alert("Error al cargar la campaña");
+        }
     };
 
+    // ELIMINAR CAMPAÑA
     window.eliminarCampana = async (id) => {
-        if (!confirm("¿Eliminar campaña?")) return;
-        await db.collection("campanas").doc(id).delete();
-        cargarCampanas();
+        if (!confirm("¿Estás seguro de eliminar esta campaña?")) return;
+
+        try {
+            // Verificar si hay inscripciones
+            const inscritosSnap = await db.collection("inscripciones")
+                .where("campanaId", "==", id)
+                .get();
+            
+            if (!inscritosSnap.empty) {
+                alert("No se puede eliminar una campaña con donantes inscritos.");
+                return;
+            }
+
+            await db.collection("campanas").doc(id).delete();
+            cargarCampanas();
+        } catch (error) {
+            console.error("Error eliminando campaña:", error);
+            alert("Error al eliminar la campaña");
+        }
     };
 
+    // LOGOUT
     function logout() {
         auth.signOut().then(() => {
             window.location.href = "../login/login.html";
         });
     }
+
+    // HACER FUNCIONES GLOBALES
+    window.logout = logout;
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
