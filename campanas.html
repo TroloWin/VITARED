@@ -15,13 +15,12 @@
 </head>
 <body>
 
-<!-- NAVBAR (IGUAL AL INDEX) -->
+<!-- NAVBAR (EXACTAMENTE IGUAL AL INDEX) -->
 <nav class="navbar navbar-expand-lg shadow-sm sticky-top">
     <div class="container py-2">
         <a class="navbar-brand" href="index.html">
             <img src="public/images/vitared_logo.png" 
                  alt="VITARED" 
-                 class="logo-img" 
                  style="width:140px;">
         </a>
 
@@ -49,13 +48,13 @@
             </ul>
 
             <div class="d-flex align-items-center" id="authButtons">
-                <!-- Se llena dinámicamente -->
+                <!-- Se llena dinámicamente IGUAL AL INDEX -->
             </div>
         </div>
     </div>
 </nav>
 
-<!-- HERO DE CAMPAÑAS (CON GRADIENTE COMO LAS DEMÁS) -->
+<!-- HERO DE CAMPAÑAS (CON GRADIENTE) -->
 <section class="campanas-hero">
     <div class="container text-center">
         <h1 class="display-4 fw-bold text-white">Campañas de Donación</h1>
@@ -81,11 +80,11 @@
     © 2025 Donación de Sangre | Proyecto VITARED
 </footer>
 
-<!-- Font Awesome -->
+<!-- Font Awesome (solo para iconos de cards, no para navbar) -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
-/* ESTILOS DEL HERO (IGUAL AL DE REQUISITOS Y PREGUNTAS) */
+/* ESTILOS DEL HERO */
 .campanas-hero {
     height: 45vh;
     background: linear-gradient(rgba(139,0,0,0.7), rgba(179,0,0,0.7)),
@@ -95,7 +94,7 @@
     color: white;
 }
 
-/* CARDS CON ESTILO PROFESIONAL */
+/* CARDS PROFESIONALES */
 .campaign-card {
     transition: all 0.3s ease;
     border-radius: 15px;
@@ -120,6 +119,8 @@
     background: linear-gradient(90deg, #8B0000, #b30000);
     border: none;
     transition: 0.3s ease;
+    color: white;
+    font-weight: 500;
 }
 
 .btn-danger:hover:not(:disabled) {
@@ -132,10 +133,23 @@
     cursor: not-allowed;
 }
 
+.btn-outline-danger {
+    border: 2px solid #dc3545;
+    color: #dc3545;
+    background: transparent;
+    transition: 0.3s ease;
+}
+
+.btn-outline-danger:hover {
+    background: #dc3545;
+    color: white;
+}
+
 /* BADGES */
 .badge {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
+    border-radius: 50px;
 }
 
 .badge-success {
@@ -151,6 +165,15 @@
 .badge-danger {
     background-color: #dc3545;
     color: white;
+}
+
+/* TEXTO */
+.text-danger {
+    color: #8B0000 !important;
+}
+
+.section-title {
+    color: #8B0000;
 }
 </style>
 
@@ -225,13 +248,13 @@
                         <div class="card-body d-flex flex-column">
                             <h5 class="text-danger fw-bold">${c.nombre || 'Campaña de Donación'}</h5>
                             <p class="card-text flex-grow-1">${c.descripcion || 'Sin descripción'}</p>
-                            <p><strong><i class="fas fa-map-marker-alt text-danger me-2"></i>${c.lugar || 'Lugar no especificado'}</strong></p>
-                            <p><strong><i class="fas fa-calendar-alt text-danger me-2"></i>${c.fecha || 'Fecha no especificada'}</strong></p>
+                            <p><strong>📍 ${c.lugar || 'Lugar no especificado'}</strong></p>
+                            <p><strong>📅 ${c.fecha || 'Fecha no especificada'}</strong></p>
                             <p class="mb-3">${badgeEstado}</p>
                             <button class="btn btn-danger w-100"
                                     onclick="inscribirseCampana('${c.id}')"
                                     ${botonDisabled}>
-                                <i class="fas fa-heart me-2"></i>Inscribirme
+                                Inscribirme
                             </button>
                         </div>
                     </div>
@@ -291,7 +314,7 @@
         }
     };
 
-    // CONTROL DE AUTENTICACIÓN EN NAVBAR
+    // CONTROL DE AUTENTICACIÓN EN NAVBAR (EXACTAMENTE IGUAL AL INDEX)
     auth.onAuthStateChanged(async (user) => {
         const authDiv = document.getElementById('authButtons');
         
@@ -301,32 +324,32 @@
             if (rol.esAdmin) {
                 authDiv.innerHTML = `
                     <a href="admin/dashboard.html" class="btn btn-danger register-btn me-2">
-                        <i class="fas fa-cog"></i> Admin Panel
+                        Admin Panel
                     </a>
                     <button onclick="logout()" class="btn btn-outline-danger login-btn">
-                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        Cerrar Sesión
                     </button>
                 `;
             } else {
                 authDiv.innerHTML = `
                     <span class="text-danger me-3">
-                        <i class="fas fa-user"></i> ${user.displayName || 'Usuario'}
+                        ${user.displayName || 'Usuario'}
                     </span>
                     <a href="perfil.html" class="btn btn-outline-danger login-btn me-2">
-                        <i class="fas fa-user-circle"></i> Mi Perfil
+                        Mi Perfil
                     </a>
                     <button onclick="logout()" class="btn btn-danger register-btn">
-                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        Cerrar Sesión
                     </button>
                 `;
             }
         } else {
             authDiv.innerHTML = `
                 <a href="login/login.html" class="btn btn-outline-danger login-btn me-2">
-                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    Iniciar Sesión
                 </a>
                 <a href="login/register.html" class="btn btn-danger register-btn">
-                    <i class="fas fa-user-plus"></i> Registrarse
+                    Registrarse
                 </a>
             `;
         }
