@@ -209,6 +209,21 @@ return
 }
 
 
+// CONFIRMACIÓN ANTES DE DONAR
+const confirmar = confirm(
+`¿Estás seguro de que deseas donar?
+
+📍 Lugar: ${campana.lugar || "No especificado"}
+📅 Fecha: ${campana.fecha || "No especificada"}
+
+Si presionas "Aceptar" se generará tu ticket de donación.`
+)
+
+if(!confirmar){
+return
+}
+
+
 // GENERAR TICKET
 
 const ticket="T-"+Date.now()
