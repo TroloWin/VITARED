@@ -307,6 +307,121 @@ document.getElementById('userAvatarLarge').textContent=(userData.nombre || 'U').
 
 
 
+/* EDITAR PERFIL */
+
+function enableEditMode(){
+
+document.getElementById('profileName').innerHTML =
+`<input type="text" id="editNombre" class="form-control" value="${userData.nombre || ''}">`;
+
+document.getElementById('profileLocation').innerHTML =
+`<input type="text" id="editLocalidad" class="form-control" value="${userData.localidad || ''}">`;
+
+document.getElementById('profilePhone').innerHTML =
+`<input type="text" id="editTelefono" class="form-control" value="${userData.telefono || ''}">`;
+
+document.getElementById('profileBloodType').innerHTML =
+
+`<select id="editTipoSangre" class="form-control">
+
+<option value="">Seleccionar</option>
+<option ${userData.tipoSangre=="A+"?"selected":""}>A+</option>
+<option ${userData.tipoSangre=="A-"?"selected":""}>A-</option>
+<option ${userData.tipoSangre=="B+"?"selected":""}>B+</option>
+<option ${userData.tipoSangre=="B-"?"selected":""}>B-</option>
+<option ${userData.tipoSangre=="AB+"?"selected":""}>AB+</option>
+<option ${userData.tipoSangre=="AB-"?"selected":""}>AB-</option>
+<option ${userData.tipoSangre=="O+"?"selected":""}>O+</option>
+<option ${userData.tipoSangre=="O-"?"selected":""}>O-</option>
+
+</select>`;
+
+
+const btnContainer=document.querySelector('.perfil-card .d-grid');
+
+btnContainer.innerHTML=`
+
+<button class="btn btn-success" onclick="saveProfile()">
+<i class="fas fa-save me-2"></i>Guardar Cambios
+</button>
+
+<button class="btn btn-secondary" onclick="cancelEdit()">
+Cancelar
+</button>
+
+<button class="btn btn-danger" onclick="logout()">
+Cerrar Sesión
+</button>
+
+`;
+
+}
+
+
+
+/* GUARDAR PERFIL */
+
+async function saveProfile(){
+
+const nombre=document.getElementById('editNombre').value.trim();
+const localidad=document.getElementById('editLocalidad').value.trim();
+const telefono=document.getElementById('editTelefono').value.trim();
+const tipoSangre=document.getElementById('editTipoSangre').value;
+
+
+/* VALIDACION TELEFONO */
+
+const phoneRegex=/^[0-9]{10}$/;
+
+if(!phoneRegex.test(telefono)){
+alert("El teléfono debe tener 10 dígitos");
+return;
+}
+
+
+/* GUARDAR EN FIRESTORE */
+
+await userDocRef.update({
+
+nombre:nombre,
+localidad:localidad,
+telefono:telefono,
+tipoSangre:tipoSangre
+
+});
+
+
+/* ACTUALIZAR NOMBRE EN AUTH */
+
+await currentUser.updateProfile({
+displayName:nombre
+});
+
+
+alert("Perfil actualizado correctamente");
+
+loadUserProfile();
+
+location.reload();
+
+}
+
+
+
+/* CANCELAR EDICION */
+
+function cancelEdit(){
+
+loadUserProfile();
+
+location.reload();
+
+}
+
+
+
+/* HISTORIAL DONACIONES */
+
 async function loadDonaciones(){
 
 const container=document.getElementById('donacionesContainer');
@@ -355,6 +470,8 @@ container.innerHTML=html;
 }
 
 
+
+/* LOGOUT */
 
 window.logout=()=>{
 
