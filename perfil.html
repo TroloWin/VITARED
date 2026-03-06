@@ -106,14 +106,7 @@
 
 <div class="col-md-6 mb-3">
 <div class="info-item">
-<span>⚡ Puede donar</span>
-<strong id="profilePuedeDonar">—</strong>
-</div>
-</div>
-
-<div class="col-md-6 mb-3">
-<div class="info-item">
-<span>📅 Próxima donación a partir de</span>
+<span>📅 Próxima donación</span>
 <strong id="profileProximaDonacion">—</strong>
 </div>
 </div>
@@ -250,36 +243,37 @@ const donaciones=userData.donacionesRealizadas || 0;
 document.getElementById('profileDonaciones').textContent=donaciones;
 document.getElementById('profileVidas').textContent=donaciones*3;
 
-let dias=56;
 
-if(userData.sexo=="mujer"){
-dias=84;
-}
+/* CALCULO DE PROXIMA DONACION */
 
-let puedeDonar=true;
-let proximaTexto="Disponible ahora";
+let textoEstado="Sin registro";
 
 if(userData.ultimaDonacion){
 
 let ultima=userData.ultimaDonacion.toDate();
 let proxima=new Date(ultima);
 
-proxima.setDate(proxima.getDate()+dias);
+if(userData.sexo=="hombre"){
+proxima.setMonth(proxima.getMonth()+3);
+}
 
-if(new Date()<proxima){
+if(userData.sexo=="mujer"){
+proxima.setMonth(proxima.getMonth()+4);
+}
 
-puedeDonar=false;
-proximaTexto=proxima.toLocaleDateString();
+if(new Date()>=proxima){
+
+textoEstado="🟢 Disponible para donar";
+
+}else{
+
+textoEstado="🔴 Disponible a partir de "+proxima.toLocaleDateString();
 
 }
 
 }
 
-document.getElementById('profileProximaDonacion').textContent=proximaTexto;
-
-document.getElementById('profilePuedeDonar').innerHTML=puedeDonar
-? '<span class="badge bg-success">Sí puede donar</span>'
-: '<span class="badge bg-danger">No puede donar</span>';
+document.getElementById('profileProximaDonacion').textContent=textoEstado;
 
 document.getElementById('userAvatarLarge').textContent=(userData.nombre || 'U').charAt(0).toUpperCase();
 
@@ -296,12 +290,11 @@ const container=document.getElementById("inscripcionesContainer");
 
 const snapshot=await db.collection("inscripciones")
 .where("userId","==",currentUser.uid)
-.orderBy("fechaRegistro","desc")
 .get();
 
 if(snapshot.empty){
 
-container.innerHTML='<p class="text-muted">No estás inscrito en campañas</p>';
+container.innerHTML='<p class="text-muted">No tienes inscripciones todavía</p>';
 return;
 
 }
@@ -320,11 +313,11 @@ html+=`
 
 <div class="card-body">
 
-<h5 class="text-danger">${i.campanaNombre}</h5>
+<h5 class="text-danger">${i.campanaNombre || "Campaña"}</h5>
 
-<p><strong>🎫 Ticket:</strong> ${i.ticket}</p>
-<p><strong>📍 Lugar:</strong> ${i.lugar}</p>
-<p><strong>📅 Fecha:</strong> ${i.fecha}</p>
+<p><strong>🎫 Ticket:</strong> ${i.ticket || "-"}</p>
+<p><strong>📍 Lugar:</strong> ${i.lugar || "-"}</p>
+<p><strong>📅 Fecha:</strong> ${i.fecha || "-"}</p>
 <p><strong>⏰ Hora:</strong> ${i.hora || "Asignada en el centro"}</p>
 
 </div>
@@ -344,87 +337,33 @@ container.innerHTML=html;
 }
 
 
-/* INSCRIPCIONES */
-
-async function loadInscripciones(){
-
-const container=document.getElementById("inscripcionesContainer");
-
-try{
-
-const snapshot=await db
-.collection("inscripciones")
-.where("userId","==",currentUser.uid)
-.get();
-
-if(snapshot.empty){
-
-container.innerHTML=`<p class="text-muted">No tienes inscripciones todavía</p>`;
-return;
-
-}
-
-container.innerHTML="";
-
-snapshot.forEach(doc=>{
-
-const data=doc.data();
-
-container.innerHTML+=`
-
-<div class="card mb-2 p-3 border">
-
-<strong>${data.campanaNombre || "Campaña"}</strong><br>
-<span class="text-muted">${data.fecha || ""}</span>
-
-</div>
-
-`;
-
-});
-
-}catch(e){
-
-container.innerHTML=`<p class="text-danger">Error al cargar inscripciones</p>`;
-
-}
-
-}
-
-
-
 /* HISTORIAL DONACIONES */
 
 async function loadDonaciones(){
 
 const container=document.getElementById("donacionesContainer");
 
-try{
-
-const snapshot=await db
-.collection("donaciones")
+const snapshot=await db.collection("donaciones")
 .where("userId","==",currentUser.uid)
 .get();
 
 if(snapshot.empty){
 
-container.innerHTML=`<p class="text-muted">Aún no tienes donaciones registradas</p>`;
+container.innerHTML='<p class="text-muted">Aún no tienes donaciones registradas</p>';
 return;
 
 }
 
-container.innerHTML="";
-
 snapshot.forEach(doc=>{
 
-const data=doc.data();
+const d=doc.data();
 
 container.innerHTML+=`
 
 <div class="card mb-2 p-3 border">
 
 <strong>Donación realizada</strong><br>
-<span class="text-muted">${data.fecha || ""}</span>
+<span class="text-muted">${d.fecha || ""}</span>
 
 </div>
 
@@ -432,13 +371,24 @@ container.innerHTML+=`
 
 });
 
-}catch(e){
+}
 
-container.innerHTML=`<p class="text-danger">Error al cargar historial</p>`;
+
+/* EDITAR PERFIL */
+
+function enableEditMode(){
+
+document.getElementById('profileName').innerHTML =
+`<input type="text" id="editNombre" class="form-control" value="${userData.nombre || ''}">`;
+
+document.getElementById('profileLocation').innerHTML =
+`<input type="text" id="editLocalidad" class="form-control" value="${userData.localidad || ''}">`;
+
+document.getElementById('profilePhone').innerHTML =
+`<input type="text" id="editTelefono" class="form-control" value="${userData.telefono || ''}">`;
 
 }
 
-}
 
 /* LOGOUT */
 
