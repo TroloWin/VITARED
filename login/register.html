@@ -80,6 +80,16 @@
                         </select>
                     </div>
 
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Sexo *</label>
+                        <select id="sexo" class="form-select" required>
+                            <option value="">Seleccione</option>
+                            <option value="Hombre">Hombre</option>
+                            <option value="Mujer">Mujer</option>
+                        </select>
+                    </div>
+
+
                     <div class="col-12 mb-4">
                         <label class="form-label">Localidad *</label>
                         <input type="text" id="localidad" class="form-control" required>
@@ -116,11 +126,6 @@
                 </div>
             </form>
             
-            <div class="text-center mt-3">
-                <button class="btn btn-sm btn-outline-secondary" onclick="probarFirestore()" type="button">
-                    Probar conexión Firestore
-                </button>
-            </div>
         </div>
     </div>
 </section>
@@ -132,27 +137,6 @@
 
 <script src="../public/js/firebase-config.js"></script>
 <script>
-    // Función para probar Firestore
-    window.probarFirestore = async () => {
-        const debugAlert = document.getElementById('debugAlert');
-        debugAlert.style.display = 'block';
-        debugAlert.textContent = 'Probando conexión a Firestore...';
-        
-        try {
-            const testDoc = db.collection('test').doc('test-' + Date.now());
-            await testDoc.set({ 
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                message: "Prueba desde registro"
-            });
-            debugAlert.textContent = '✅ Firestore funciona correctamente';
-            debugAlert.className = 'alert alert-success';
-            await testDoc.delete();
-        } catch (error) {
-            debugAlert.textContent = '❌ Error en Firestore: ' + error.message;
-            debugAlert.className = 'alert alert-danger';
-            console.error(error);
-        }
-    };
 
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -188,6 +172,7 @@
             fechaNacimiento: document.getElementById('fechaNacimiento').value,
             peso: parseFloat(document.getElementById('peso').value),
             tipoSangre: document.getElementById('tipoSangre').value,
+            sexo: document.getElementById('sexo').value,
             localidad: document.getElementById('localidad').value
         };
         
