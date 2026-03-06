@@ -45,14 +45,15 @@
 </nav>
 
 
-<!-- PERFIL -->
 <section class="perfil-section py-5">
 
 <div class="container">
 
 <div class="row g-4">
 
+
 <!-- PERFIL IZQUIERDA -->
+
 <div class="col-lg-4">
 
 <div class="card shadow perfil-card border-0 text-center p-4">
@@ -63,6 +64,7 @@
 
 <h4 id="profileName" class="mt-3">Cargando...</h4>
 <p class="text-muted" id="profileEmail"></p>
+
 
 <div class="perfil-info">
 
@@ -81,27 +83,8 @@
 <strong id="profileBloodType">—</strong>
 </div>
 
-<div class="info-item">
-<span>⚡ Puede donar</span>
-<strong id="profilePuedeDonar">—</strong>
 </div>
 
-<div class="info-item">
-<span>🗓 Próxima donación</span>
-<strong id="profileProximaDonacion">—</strong>
-</div>
-
-<div class="info-item">
-<span>🏥 Donaciones</span>
-<strong id="profileDonaciones">0</strong>
-</div>
-
-<div class="info-item">
-<span>❤️ Vidas salvadas</span>
-<strong id="profileVidas">0</strong>
-</div>
-
-</div>
 
 <div class="d-grid gap-2 mt-4">
 
@@ -120,71 +103,60 @@
 </div>
 
 
-<!-- CONTENIDO DERECHO -->
+
+<!-- TARJETA DERECHO -->
+
 <div class="col-lg-8">
 
-<!-- EDITAR PERFIL -->
-<div class="card shadow border-0 p-4 mb-4" id="editProfileCard" style="display:none;">
+<div class="card shadow border-0 p-4 mb-4">
 
-<h4 class="text-danger mb-4">Editar Perfil</h4>
-
-<form id="editProfileForm">
+<h4 class="text-danger mb-3">Estado de Donación</h4>
 
 <div class="row">
 
 <div class="col-md-6 mb-3">
-<label class="form-label fw-semibold">Nombre</label>
-<input type="text" id="editName" class="form-control">
+
+<div class="info-item">
+<span>⚡ Puede donar</span>
+<strong id="profilePuedeDonar">—</strong>
 </div>
-
-<div class="col-md-6 mb-3">
-<label class="form-label fw-semibold">Teléfono</label>
-<input type="text" id="editPhone" class="form-control">
-</div>
-
-<div class="col-md-6 mb-3">
-<label class="form-label fw-semibold">Localidad</label>
-<input type="text" id="editLocation" class="form-control">
-</div>
-
-<div class="col-md-6 mb-3">
-<label class="form-label fw-semibold">Tipo de sangre</label>
-
-<select id="editBloodType" class="form-select">
-<option value="">Selecciona</option>
-<option>A+</option>
-<option>A-</option>
-<option>B+</option>
-<option>B-</option>
-<option>AB+</option>
-<option>AB-</option>
-<option>O+</option>
-<option>O-</option>
-</select>
 
 </div>
 
 <div class="col-md-6 mb-3">
-<label class="form-label fw-semibold">Peso (kg)</label>
-<input type="number" id="editPeso" class="form-control">
+
+<div class="info-item">
+<span>📅 Próxima donación a partir de</span>
+<strong id="profileProximaDonacion">—</strong>
 </div>
 
 </div>
 
-<button class="btn btn-danger px-5">
-<i class="fas fa-save me-2"></i>Guardar Cambios
-</button>
+<div class="col-md-6 mb-3">
 
-<button type="button" onclick="cancelEdit()" class="btn btn-outline-secondary ms-2 px-5">
-Cancelar
-</button>
+<div class="info-item">
+<span>🏥 Donaciones</span>
+<strong id="profileDonaciones">0</strong>
+</div>
 
-</form>
+</div>
+
+<div class="col-md-6 mb-3">
+
+<div class="info-item">
+<span>❤️ Vidas salvadas</span>
+<strong id="profileVidas">0</strong>
+</div>
+
+</div>
+
+</div>
 
 </div>
 
 
 <!-- HISTORIAL -->
+
 <div class="card shadow border-0 p-4">
 
 <h4 class="text-danger mb-3">Historial de Donaciones</h4>
@@ -204,6 +176,7 @@ Cancelar
 </section>
 
 
+
 <footer>
 © 2025 Donación de Sangre | Proyecto VITARED
 </footer>
@@ -219,15 +192,6 @@ background:#f7f7f7;
 min-height:80vh;
 }
 
-.perfil-card{
-border-radius:15px;
-}
-
-.avatar-container{
-display:flex;
-justify-content:center;
-}
-
 .user-avatar-large{
 width:110px;
 height:110px;
@@ -239,11 +203,6 @@ align-items:center;
 justify-content:center;
 font-weight:bold;
 font-size:2.6rem;
-box-shadow:0 6px 15px rgba(0,0,0,0.2);
-}
-
-.perfil-info{
-margin-top:20px;
 }
 
 .info-item{
@@ -251,13 +210,13 @@ display:flex;
 justify-content:space-between;
 padding:10px 0;
 border-bottom:1px solid #eee;
-font-size:15px;
 }
 
 </style>
 
 
 <script src="public/js/firebase-config.js"></script>
+
 
 <script>
 
@@ -280,6 +239,7 @@ loadDonaciones();
 });
 
 
+
 async function loadUserProfile(){
 
 userDocRef=db.collection('users').doc(currentUser.uid);
@@ -298,25 +258,22 @@ document.getElementById('profilePhone').textContent=userData.telefono || '—';
 document.getElementById('profileBloodType').textContent=userData.tipoSangre || '—';
 
 const donaciones=userData.donacionesRealizadas || 0;
+
 document.getElementById('profileDonaciones').textContent=donaciones;
 
 document.getElementById('profileVidas').textContent=donaciones*3;
 
 
-/* PUEDE DONAR */
+/* PROXIMA DONACION SEGUN SEXO */
 
-let puedeDonar=false;
+let dias=56;
 
-if(userData.peso && userData.peso>=50){
-puedeDonar=true;
+if(userData.sexo=="mujer"){
+dias=84;
 }
 
-document.getElementById('profilePuedeDonar').innerHTML=puedeDonar
-? '<span class="badge bg-success">Disponible</span>'
-: '<span class="badge bg-secondary">No disponible</span>';
-
-
-/* PROXIMA DONACION */
+let puedeDonar=true;
+let proximaTexto="Disponible ahora";
 
 if(userData.ultimaDonacion){
 
@@ -324,24 +281,25 @@ let ultima=userData.ultimaDonacion.toDate();
 
 let proxima=new Date(ultima);
 
-proxima.setDate(proxima.getDate()+56);
+proxima.setDate(proxima.getDate()+dias);
 
-document.getElementById('profileProximaDonacion').textContent=proxima.toLocaleDateString();
+if(new Date()<proxima){
 
-}else{
-
-document.getElementById('profileProximaDonacion').textContent='Disponible ahora';
+puedeDonar=false;
+proximaTexto=proxima.toLocaleDateString();
 
 }
 
+}
+
+document.getElementById('profileProximaDonacion').textContent=proximaTexto;
+
+document.getElementById('profilePuedeDonar').innerHTML=puedeDonar
+? '<span class="badge bg-success">Sí puede donar</span>'
+: '<span class="badge bg-danger">No puede donar</span>';
+
 
 document.getElementById('userAvatarLarge').textContent=(userData.nombre || 'U').charAt(0).toUpperCase();
-
-document.getElementById('editName').value=userData.nombre || '';
-document.getElementById('editPhone').value=userData.telefono || '';
-document.getElementById('editLocation').value=userData.localidad || '';
-document.getElementById('editBloodType').value=userData.tipoSangre || '';
-document.getElementById('editPeso').value=userData.peso || '';
 
 }
 
@@ -383,10 +341,6 @@ html+=`
 <p class="mb-0">Cantidad: ${d.cantidad || '450ml'}</p>
 
 </div>
-
-<button class="btn btn-sm btn-outline-danger" onclick="verComprobante('${doc.id}')">
-Ver comprobante
-</button>
 
 </div>
 
