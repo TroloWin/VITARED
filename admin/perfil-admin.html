@@ -5,13 +5,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>VITARED | Panel Administrativo</title>
+<title>Perfil Administrador</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="../public/css/public.css">
 <link rel="stylesheet" href="css/admin.css">
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -29,7 +28,6 @@
 <h3>Admin Panel</h3>
 </div>
 
-<!-- PERFIL ADMIN -->
 <div class="admin-profile text-center p-3">
 
 <div class="user-avatar" id="userAvatar">A</div>
@@ -45,13 +43,13 @@
 <ul>
 
 <li>
-<a href="dashboard.html" class="active">
+<a href="dashboard.html">
 <i class="fas fa-home"></i> Dashboard
 </a>
 </li>
 
 <li>
-<a href="perfil-admin.html">
+<a href="perfil-admin.html" class="active">
 <i class="fas fa-user"></i> Perfil
 </a>
 </li>
@@ -81,50 +79,39 @@
 </div>
 
 
-<!-- MAIN CONTENT -->
+
+<!-- CONTENIDO -->
 <div class="main-content">
 
 <div class="top-bar">
+<h2>Perfil del Administrador</h2>
+</div>
 
-<h2>Dashboard</h2>
+
+<div class="card shadow p-4">
+
+<div class="mb-3">
+
+<label class="form-label">Nombre</label>
+
+<input type="text" id="adminNombre" class="form-control">
 
 </div>
 
 
-<div class="row mb-4">
+<div class="mb-3">
 
-<div class="col-md-6">
+<label class="form-label">Correo</label>
 
-<div class="card bg-danger text-white">
-
-<div class="card-body">
-
-<h5>Total Usuarios</h5>
-
-<h2 id="totalUsuarios">0</h2>
-
-</div>
-
-</div>
+<input type="text" id="adminCorreo" class="form-control" disabled>
 
 </div>
 
 
-<div class="col-md-6">
+<button class="btn btn-danger" onclick="guardarPerfil()">
+Guardar Cambios
+</button>
 
-<div class="card bg-success text-white">
-
-<div class="card-body">
-
-<h5>Total Campañas</h5>
-
-<h2 id="totalCampanas">0</h2>
-
-</div>
-
-</div>
-
-</div>
 
 </div>
 
@@ -140,9 +127,7 @@
 
 let currentUser=null;
 
-
-// LOGIN
-auth.onAuthStateChanged(async(user)=>{
+auth.onAuthStateChanged(user=>{
 
 if(!user){
 
@@ -154,7 +139,12 @@ return;
 currentUser=user;
 
 
-// MOSTRAR ADMIN
+// DATOS
+
+document.getElementById("adminNombre").value=
+user.displayName || "";
+
+document.getElementById("adminCorreo").value=user.email;
 
 document.getElementById("userName").textContent=
 user.displayName || user.email;
@@ -162,28 +152,23 @@ user.displayName || user.email;
 document.getElementById("userAvatar").textContent=
 (user.displayName || user.email).charAt(0).toUpperCase();
 
-
-// CARGAR DATOS
-
-cargarDashboard();
-
 });
 
 
 
-async function cargarDashboard(){
+function guardarPerfil(){
 
-const users=await db.collection("users").get();
+const nombre=document.getElementById("adminNombre").value;
 
-document.getElementById("totalUsuarios").textContent=
-users.size;
+currentUser.updateProfile({
 
+displayName:nombre
 
+}).then(()=>{
 
-const campanas=await db.collection("campanas").get();
+alert("Perfil actualizado");
 
-document.getElementById("totalCampanas").textContent=
-campanas.size;
+});
 
 }
 
@@ -200,9 +185,6 @@ window.location.href="../login/login.html";
 }
 
 </script>
-
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
