@@ -378,8 +378,12 @@ async function obtenerCentrosDonacion() {
         // Si no hay centros, devolver algunos por defecto
         if (centros.length === 0) {
             return [
-                { id: 'hospital-general', nombre: 'Hospital General', direccion: 'Av. Universidad 101', telefono: '618-123-4567', horario: 'Lun-Vie 8am-6pm' },
-                { id: 'centro-salud', nombre: 'Centro de Salud La Paz', direccion: 'Blvd. Arrieta 234', telefono: '618-765-4321', horario: 'Lun-Vie 9am-5pm' }
+                { id: 'centro-transfusion',
+                    nombre: 'Centro Estatal de la Transfusión Sanguínea CETS Durango',
+                    direccion: 'Blvd. José María Patoni 403, 34217 Durango, Durango',
+                    telefono: '618-137-3160',
+                    horario: 'Lun-Vie 8am-6pm'
+                }
             ];
         }
         
