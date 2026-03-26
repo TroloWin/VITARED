@@ -14,9 +14,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
+
 <body class="admin-body">
 
-<!-- SIDEBAR - 5 OPCIONES -->
+<!-- SIDEBAR ORIGINAL -->
 <div class="sidebar">
     <div class="sidebar-header">
         <img src="../public/images/vitared_logo.png" alt="VITARED">
@@ -25,45 +26,36 @@
 
     <div class="sidebar-nav">
         <ul>
-            <li>
-                <a href="dashboard.html" class="active">
-                    <i class="fas fa-home"></i> Dashboard
-                </a>
-            </li>
-            <li>
-                <a href="gestionar-campanas.html">
-                    <i class="fas fa-calendar-alt"></i> Gestionar Campañas
-                </a>
-            </li>
-            <li>
-                <a href="registro-donantes.html">
-                    <i class="fas fa-user-plus"></i> Registro de Donantes
-                </a>
-            </li>
-            <li>
-                <a href="../index.html" target="_blank">
-                    <i class="fas fa-globe"></i> Ver Página Web
-                </a>
-            </li>
-            <li>
-                <a href="#" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                </a>
-            </li>
+            <li><a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="gestionar-campanas.html"><i class="fas fa-calendar-alt"></i> Gestionar Campañas</a></li>
+            <li><a href="registro-donantes.html"><i class="fas fa-user-plus"></i> Registro de Donantes</a></li>
+            <li><a href="../index.html" target="_blank"><i class="fas fa-globe"></i> Ver Página Web</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
         </ul>
     </div>
 </div>
 
-<!-- MAIN CONTENT -->
+<!-- CONTENIDO -->
 <div class="main-content">
-    <div class="top-bar">
+
+    <!-- TOP BAR CON PERFIL -->
+    <div class="top-bar d-flex justify-content-between align-items-center">
         <h2>Dashboard</h2>
+
+        <div class="d-flex align-items-center" style="cursor:pointer;" onclick="irPerfil()">
+            <img id="fotoAdmin"
+                 src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                 width="40" height="40"
+                 style="border-radius:50%; margin-right:10px;">
+            <span id="nombreAdmin">Admin</span>
+        </div>
     </div>
 
+    <!-- CARDS -->
     <div class="row mb-4">
         <div class="col-md-6">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
+            <div class="card bg-danger text-white shadow" style="cursor:pointer;" onclick="mostrarUsuarios()">
+                <div class="card-body text-center">
                     <h5>Total Usuarios</h5>
                     <h2 id="totalUsuarios">0</h2>
                 </div>
@@ -71,44 +63,219 @@
         </div>
 
         <div class="col-md-6">
-            <div class="card bg-success text-white">
-                <div class="card-body">
+            <div class="card bg-success text-white shadow" style="cursor:pointer;" onclick="mostrarCampanas()">
+                <div class="card-body text-center">
                     <h5>Total Campañas</h5>
                     <h2 id="totalCampanas">0</h2>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- TABLA USUARIOS -->
+    <div id="tablaUsuarios" class="card shadow d-none">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <h4>Usuarios Registrados</h4>
+                <button class="btn btn-secondary btn-sm" onclick="ocultarUsuarios()">Ocultar</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaUsuarios"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLA CAMPAÑAS -->
+    <div id="tablaCampanas" class="card shadow d-none mt-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <h4>Campañas Registradas</h4>
+                <button class="btn btn-secondary btn-sm" onclick="ocultarCampanas()">Ocultar</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped text-center">
+                    <thead class="table-success">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Fecha</th>
+                            <th>Lugar</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaCampanas"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <script src="../public/js/firebase-config.js"></script>
+
 <script>
-    auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-            window.location.href = "../login/login.html";
-            return;
+auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+        window.location.href = "../login/login.html";
+        return;
+    }
+
+    cargarDashboard();
+    cargarPerfilAdmin(user);
+});
+
+// DASHBOARD
+async function cargarDashboard() {
+    const users = await db.collection("users").get();
+    document.getElementById("totalUsuarios").textContent = users.size;
+
+    const campanas = await db.collection("campanas").get();
+    document.getElementById("totalCampanas").textContent = campanas.size;
+}
+
+// PERFIL EN TIEMPO REAL 🔥
+function cargarPerfilAdmin(user) {
+    db.collection("users").doc(user.uid)
+    .onSnapshot(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+
+            document.getElementById("nombreAdmin").textContent =
+                data.nombre || data.email || "Admin";
+
+            if (data.foto) {
+                document.getElementById("fotoAdmin").src = data.foto;
+            }
         }
-        cargarDashboard();
     });
+}
 
-    async function cargarDashboard() {
-        const users = await db.collection("users").get();
-        document.getElementById("totalUsuarios").textContent = users.size;
+function irPerfil() {
+    window.location.href = "perfil-admin.html";
+}
 
-        const campanas = await db.collection("campanas").get();
-        document.getElementById("totalCampanas").textContent = campanas.size;
-    }
+// USUARIOS EN TIEMPO REAL 🔥
+function mostrarUsuarios() {
+    document.getElementById("tablaCampanas").classList.add("d-none");
 
-    function logout() {
-        auth.signOut().then(() => {
-            window.location.href = "../login/login.html";
+    const contenedor = document.getElementById("tablaUsuarios");
+    const lista = document.getElementById("listaUsuarios");
+
+    contenedor.classList.remove("d-none");
+
+    db.collection("users").onSnapshot(snapshot => {
+        lista.innerHTML = "";
+
+        snapshot.forEach(doc => {
+            const user = doc.data();
+            const id = doc.id;
+
+            lista.innerHTML += `
+                <tr>
+                    <td>
+                        <strong>${user.nombre || "Sin nombre"}</strong><br>
+                        <small>${user.email || "Sin email"}</small>
+                    </td>
+                    <td>
+                        <span class="badge ${user.rol === "admin" ? "bg-success" : "bg-secondary"}">
+                            ${user.rol || "usuario"}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="hacerAdmin('${id}')">
+                            <i class="fas fa-user-shield"></i>
+                        </button>
+
+                        <button class="btn btn-sm btn-danger" onclick="eliminarUsuario('${id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
         });
-    }
+    });
+}
+
+function ocultarUsuarios() {
+    document.getElementById("tablaUsuarios").classList.add("d-none");
+}
+
+async function hacerAdmin(userId) {
+    await db.collection("users").doc(userId).update({ rol: "admin" });
+    alert("Usuario ahora es ADMIN 🔥");
+}
+
+async function eliminarUsuario(userId) {
+    if (!confirm("¿Seguro que quieres eliminar este usuario?")) return;
+    await db.collection("users").doc(userId).delete();
+    alert("Usuario eliminado 🗑️");
+    cargarDashboard();
+}
+
+// CAMPAÑAS
+function mostrarCampanas() {
+    document.getElementById("tablaUsuarios").classList.add("d-none");
+
+    const contenedor = document.getElementById("tablaCampanas");
+    const lista = document.getElementById("listaCampanas");
+
+    contenedor.classList.remove("d-none");
+
+    db.collection("campanas").onSnapshot(snapshot => {
+        lista.innerHTML = "";
+
+        snapshot.forEach(doc => {
+            const campana = doc.data();
+            const id = doc.id;
+
+            lista.innerHTML += `
+                <tr>
+                    <td>${campana.nombre || "Sin nombre"}</td>
+                    <td>${campana.fecha || "Sin fecha"}</td>
+                    <td>${campana.lugar || "Sin lugar"}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarCampana('${id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+}
+
+function ocultarCampanas() {
+    document.getElementById("tablaCampanas").classList.add("d-none");
+}
+
+async function eliminarCampana(id) {
+    if (!confirm("¿Eliminar esta campaña?")) return;
+    await db.collection("campanas").doc(id).delete();
+    alert("Campaña eliminada 🗑️");
+    cargarDashboard();
+}
+
+// LOGOUT
+function logout() {
+    auth.signOut().then(() => {
+        window.location.href = "../login/login.html";
+    });
+}
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
