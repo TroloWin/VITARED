@@ -57,7 +57,10 @@ async function registrarDonante(datos) {
             telefono: datos.telefono,
             fechaNacimiento: datos.fechaNacimiento,
             peso: datos.peso,
+            altura: datos.altura,   // 🔥 NUEVO
+            imc: datos.imc,         // 🔥 NUEVO
             tipoSangre: datos.tipoSangre,
+            sexo: datos.sexo,       // 👈 te faltaba también
             localidad: datos.localidad,
             esAdmin: false,
             puedeDonar: null,
