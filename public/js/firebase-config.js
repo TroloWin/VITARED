@@ -50,17 +50,17 @@ async function registrarDonante(datos) {
         });
         console.log("✅ Perfil actualizado");
         
-        // 3. Guardar EN FIRESTORE
+        // 3. Guardar EN FIRESTORE (INCLUYENDO ALTURA E IMC)
         const userData = {
             nombre: datos.nombre,
             email: datos.email,
             telefono: datos.telefono,
             fechaNacimiento: datos.fechaNacimiento,
             peso: datos.peso,
-            altura: datos.altura,   // 🔥 NUEVO
-            imc: datos.imc,         // 🔥 NUEVO
+            altura: datos.altura,           // 🔥 NUEVO CAMPO
+            imc: datos.imc,                 // 🔥 NUEVO CAMPO
             tipoSangre: datos.tipoSangre,
-            sexo: datos.sexo,       // 👈 te faltaba también
+            sexo: datos.sexo,
             localidad: datos.localidad,
             esAdmin: false,
             puedeDonar: null,
@@ -167,6 +167,7 @@ async function verificarRequisitosDonante(userId) {
             validacionRequisitos: {
                 edad: edad,
                 peso: userData.peso,
+                imc: userData.imc,
                 fechaValidacion: firebase.firestore.FieldValue.serverTimestamp()
             }
         });
@@ -215,16 +216,14 @@ async function crearCampana(datos) {
         if (!rol.esAdmin) throw new Error("No autorizado");
         
         const campanaData = {
-            titulo: datos.titulo,
-            descripcion: datos.descripcion,
-            ubicacion: datos.ubicacion,
-            fecha: firebase.firestore.Timestamp.fromDate(new Date(datos.fecha)),
-            hora: datos.hora || '',
+            nombre: datos.nombre,
+            lugar: datos.lugar,
+            fecha: datos.fecha,
+            imagen: datos.imagen || 'campana-default.jpg',
+            status: datos.status || 'activa',
+            descripcion: datos.descripcion || '',
             cupoMaximo: datos.cupoMaximo || 50,
             cupoActual: 0,
-            imagen: datos.imagen || 'campana-default.jpg',
-            activa: datos.activa !== undefined ? datos.activa : true,
-            destacada: datos.destacada || false,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: user.uid
         };
@@ -249,10 +248,10 @@ async function obtenerCampanas(activas = true) {
         let query = db.collection('campanas');
         
         if (activas) {
-            query = query.where('activa', '==', true);
+            query = query.where('status', '==', 'activa');
         }
         
-        query = query.orderBy('fecha', 'asc');
+        query = query.orderBy('fecha', 'desc');
         
         const snapshot = await query.get();
         const campanas = [];
@@ -280,7 +279,7 @@ async function obtenerCampanasDestacadas() {
     console.log("🔵 Obteniendo campañas destacadas...");
     try {
         const snapshot = await db.collection('campanas')
-            .where('activa', '==', true)
+            .where('status', '==', 'activa')
             .where('destacada', '==', true)
             .orderBy('fecha', 'asc')
             .limit(3)
@@ -318,15 +317,13 @@ async function actualizarCampana(campanaId, datos) {
         if (!rol.esAdmin) throw new Error("No autorizado");
         
         const updateData = {
-            titulo: datos.titulo,
-            descripcion: datos.descripcion,
-            ubicacion: datos.ubicacion,
-            fecha: firebase.firestore.Timestamp.fromDate(new Date(datos.fecha)),
-            hora: datos.hora || '',
+            nombre: datos.nombre,
+            lugar: datos.lugar,
+            fecha: datos.fecha,
+            imagen: datos.imagen,
+            status: datos.status,
+            descripcion: datos.descripcion || '',
             cupoMaximo: datos.cupoMaximo || 50,
-            imagen: datos.imagen || 'campana-default.jpg',
-            activa: datos.activa,
-            destacada: datos.destacada || false,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
@@ -363,28 +360,25 @@ async function eliminarCampana(campanaId) {
 }
 
 // ===========================================
-// FUNCIONES DE INSCRIPCIONES (NUEVAS)
+// FUNCIONES DE INSCRIPCIONES
 // ===========================================
 
 /**
- * REGISTRAR INSCRIPCIÓN A CAMPAÑA (formulario público)
- * @param {Object} datos - Datos del formulario de inscripción
+ * REGISTRAR INSCRIPCIÓN A CAMPAÑA
+ * @param {Object} datos - Datos de la inscripción
  * @returns {Promise<Object>} Resultado de la operación
  */
 async function registrarInscripcion(datos) {
     try {
         const inscripcion = {
-            nombre: datos.nombre,
-            correo: datos.correo,
-            telefono: datos.telefono,
-            tipoSangre: datos.tipoSangre,
-            edad: datos.edad,
-            peso: datos.peso,
-            campana: datos.campana,
-            fechaDisponible: datos.fechaDisponible,
-            comentarios: datos.comentarios || "",
-            estado: "pendiente",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            userId: datos.userId,
+            userEmail: datos.userEmail,
+            campanaId: datos.campanaId,
+            campanaNombre: datos.campanaNombre,
+            fechaCampana: datos.fechaCampana,
+            ticket: datos.ticket,
+            fechaRegistro: new Date().toLocaleString(),
+            estado: "pendiente"
         };
 
         await db.collection("inscripciones").add(inscripcion);
@@ -398,26 +392,21 @@ async function registrarInscripcion(datos) {
 }
 
 /**
- * OBTENER INSCRIPCIONES POR CAMPAÑA (para admin)
- * @param {string} campanaId - ID de la campaña (opcional)
+ * OBTENER INSCRIPCIONES POR CAMPAÑA
+ * @param {string} campanaId - ID de la campaña
  * @returns {Promise<Array>} Lista de inscripciones
  */
-async function obtenerInscripciones(campanaId = null) {
+async function obtenerInscripcionesPorCampana(campanaId) {
     try {
-        let query = db.collection('inscripciones').orderBy('createdAt', 'desc');
+        const snapshot = await db.collection("inscripciones")
+            .where("campanaId", "==", campanaId)
+            .get();
         
-        if (campanaId) {
-            query = query.where('campana', '==', campanaId);
-        }
-        
-        const snapshot = await query.get();
         const inscripciones = [];
-        
         snapshot.forEach(doc => {
             inscripciones.push({ id: doc.id, ...doc.data() });
         });
         
-        console.log(`✅ Se encontraron ${inscripciones.length} inscripciones`);
         return inscripciones;
     } catch (error) {
         console.error("❌ Error obteniendo inscripciones:", error);
@@ -426,61 +415,24 @@ async function obtenerInscripciones(campanaId = null) {
 }
 
 /**
- * ACTUALIZAR ESTADO DE INSCRIPCIÓN (admin)
- * @param {string} inscripcionId - ID de la inscripción
- * @param {string} estado - Nuevo estado
- * @returns {Promise<Object>} Resultado de la operación
+ * OBTENER INSCRIPCIONES DE USUARIO
+ * @param {string} userId - ID del usuario
+ * @returns {Promise<Array>} Lista de inscripciones del usuario
  */
-async function actualizarEstadoInscripcion(inscripcionId, estado) {
+async function obtenerInscripcionesUsuario(userId) {
     try {
-        await db.collection('inscripciones').doc(inscripcionId).update({
-            estado: estado,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        return { success: true };
-    } catch (error) {
-        console.error("❌ Error actualizando inscripción:", error);
-        return { success: false, error: error.message };
-    }
-}
-
-/**
- * OBTENER INSCRIPCIONES CON DATOS DE CAMPAÑA (para admin)
- * @returns {Promise<Array>} Lista de inscripciones con info de campaña
- */
-async function obtenerInscripcionesConCampana() {
-    try {
-        const inscripcionesSnapshot = await db.collection('inscripciones')
-            .orderBy('createdAt', 'desc')
+        const snapshot = await db.collection("inscripciones")
+            .where("userId", "==", userId)
             .get();
         
-        const resultados = [];
+        const inscripciones = [];
+        snapshot.forEach(doc => {
+            inscripciones.push(doc.data());
+        });
         
-        for (const doc of inscripcionesSnapshot.docs) {
-            const inscripcion = { id: doc.id, ...doc.data() };
-            
-            // Buscar información de la campaña si existe
-            if (inscripcion.campana) {
-                const campanaDoc = await db.collection('campanas')
-                    .where('titulo', '==', inscripcion.campana)
-                    .limit(1)
-                    .get();
-                
-                if (!campanaDoc.empty) {
-                    inscripcion.campanaData = {
-                        id: campanaDoc.docs[0].id,
-                        ...campanaDoc.docs[0].data()
-                    };
-                }
-            }
-            
-            resultados.push(inscripcion);
-        }
-        
-        return resultados;
+        return inscripciones;
     } catch (error) {
-        console.error("❌ Error obteniendo inscripciones con campaña:", error);
+        console.error("❌ Error obteniendo inscripciones:", error);
         return [];
     }
 }
@@ -704,7 +656,10 @@ async function recuperarUsuarioEnFirestore() {
             telefono: "",
             fechaNacimiento: "1990-01-01",
             peso: 70,
+            altura: 1.70,
+            imc: 24.2,
             tipoSangre: "O+",
+            sexo: "No especificado",
             localidad: "No especificada",
             esAdmin: false,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -746,7 +701,10 @@ async function crearPrimerAdmin() {
             telefono: '6181234567',
             fechaNacimiento: '1990-01-01',
             peso: 70,
+            altura: 1.75,
+            imc: 22.9,
             tipoSangre: 'O+',
+            sexo: 'Hombre',
             localidad: 'Durango',
             esAdmin: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -840,9 +798,8 @@ window.registrarDonacion = registrarDonacion;
 window.recuperarUsuarioEnFirestore = recuperarUsuarioEnFirestore;
 window.crearPrimerAdmin = crearPrimerAdmin;
 window.registrarInscripcion = registrarInscripcion;
-window.obtenerInscripciones = obtenerInscripciones;
-window.actualizarEstadoInscripcion = actualizarEstadoInscripcion;
-window.obtenerInscripcionesConCampana = obtenerInscripcionesConCampana;
+window.obtenerInscripcionesPorCampana = obtenerInscripcionesPorCampana;
+window.obtenerInscripcionesUsuario = obtenerInscripcionesUsuario;
 
 console.log("✅ Firebase config cargado correctamente");
 console.log("📦 Funciones disponibles:", Object.keys(window).filter(k => k.startsWith('obtener') || k.startsWith('registrar') || k.startsWith('actualizar') || k.startsWith('eliminar') || k.startsWith('crear')));
