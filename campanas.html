@@ -316,7 +316,8 @@
         const user = auth.currentUser;
 
         if (!user) {
-            window.location.href = "login/login.html";
+            sessionStorage.setItem("pendingCampanaId", campanaId)
+            window.location.href = "login/login.html?redirect=campanas.html";
             return;
         }
 
@@ -382,7 +383,7 @@
             
             // Recargar campañas para actualizar contadores
             await cargarInscripcionesUsuario(user.uid);
-            cargarCampanas();
+            await cargarCampanas();
             
         } catch (error) {
             console.error("Error al inscribirse:", error);
