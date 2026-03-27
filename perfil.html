@@ -36,7 +36,7 @@
 <li><a class="nav-link nav-link-custom" href="requisitos.html">Requisitos</a></li>
 <li><a class="nav-link nav-link-custom" href="preguntas.html">Preguntas</a></li>
 <li><a class="nav-link nav-link-custom" href="campanas.html">Campañas</a></li>
-<li><a class="nav-link nav-link-custom" href="centros.html">Centros</a></li>
+<li><a class="nav-link nav-link-custom" href="centros.html">Centro</a></li>
 </ul>
 
 </div>
@@ -387,21 +387,18 @@ document.getElementById('profileLocation').innerHTML =
 document.getElementById('profilePhone').innerHTML =
 `<input type="text" id="editTelefono" class="form-control mb-1" value="${userData.telefono || ''}">`;
 
+// Select con la opción actual ya marcada
+const opcionesSangre = ['A+','A-','B+','B-','AB+','AB-','O+','O-']
+    .map(t => `<option value="${t}" ${userData.tipoSangre === t ? 'selected' : ''}>${t}</option>`)
+    .join('');
+
 document.getElementById('profileBloodType').innerHTML = `
-
     <select id="editTipoSangre" class="form-select form-select-sm">
-
-      <option value="">Seleccione</option>
-
-      ${['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(t =>
-
-        `<option value="${t}" ${'${userData.tipoSangre === t ? "selected" : ""}'}>${t}</option>`
-
-      ).join('')}
-
+        <option value="">Seleccione</option>
+        ${opcionesSangre}
     </select>`;
 
-// Cambiar botón editar por botones Guardar y Cancelar
+// Cambiar botones
 document.querySelector('button[onclick="enableEditMode()"]').outerHTML = `
     <button class="btn btn-success" id="btnGuardar" onclick="guardarCambios()">
         <i class="fas fa-save me-2"></i>Guardar Cambios
@@ -410,7 +407,6 @@ document.querySelector('button[onclick="enableEditMode()"]').outerHTML = `
         <i class="fas fa-times me-2"></i>Cancelar
     </button>
 `;
-
 }
 
 /* GUARDAR CAMBIOS */
@@ -421,24 +417,18 @@ const btnGuardar = document.getElementById('btnGuardar');
 btnGuardar.disabled = true;
 btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
 
-const nuevoNombre   = document.getElementById('editNombre')?.value.trim();
-const nuevaLocalidad = document.getElementById('editLocalidad')?.value.trim();
-const nuevoTelefono = document.getElementById('editTelefono')?.value.trim();
+const nuevoNombre     = document.getElementById('editNombre')?.value.trim();
+const nuevaLocalidad  = document.getElementById('editLocalidad')?.value.trim();
+const nuevoTelefono   = document.getElementById('editTelefono')?.value.trim();
 const nuevoTipoSangre = document.getElementById('editTipoSangre')?.value;
 
-  // Validar que ningún campo esté vacío
-  const errores = [];
+const errores = [];
+if(!nuevoNombre)     errores.push('• El nombre es obligatorio');
+if(!nuevaLocalidad)  errores.push('• La localidad es obligatoria');
+if(!nuevoTelefono)   errores.push('• El teléfono es obligatorio');
+if(!nuevoTipoSangre) errores.push('• Debes seleccionar un tipo de sangre');
 
-  if(!nuevoNombre) errores.push('• El nombre es obligatorio');
-
-  if(!nuevaLocalidad) errores.push('• La localidad es obligatoria');
-
-  if(!nuevoTelefono) errores.push('• El teléfono es obligatorio');
-
-  if(!nuevoTipoSangre) errores.push('• Debes seleccionar un tipo de sangre');
-
-  if(errores.length > 0){
-
+if(errores.length > 0){
     alert('Por favor completa los siguientes campos:\n\n' + errores.join('\n'));
     btnGuardar.disabled = false;
     btnGuardar.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Cambios';
@@ -447,24 +437,20 @@ const nuevoTipoSangre = document.getElementById('editTipoSangre')?.value;
 
 try {
     await userDocRef.update({
-        nombre:   nuevoNombre,
-        localidad: nuevaLocalidad,
-        telefono:  nuevoTelefono,
+        nombre:     nuevoNombre,
+        localidad:  nuevaLocalidad,
+        telefono:   nuevoTelefono,
         tipoSangre: nuevoTipoSangre
     });
 
-    // Actualizar displayName en Auth
     await currentUser.updateProfile({ displayName: nuevoNombre });
 
-    // Actualizar userData local
-    userData.nombre   = nuevoNombre;
-    userData.localidad = nuevaLocalidad;
-    userData.telefono  = nuevoTelefono;
+    userData.nombre     = nuevoNombre;
+    userData.localidad  = nuevaLocalidad;
+    userData.telefono   = nuevoTelefono;
     userData.tipoSangre = nuevoTipoSangre;
 
     alert('✅ Perfil actualizado correctamente');
-
-    // Volver a modo lectura
     cancelarEdicion();
 
 } catch(error){
@@ -473,19 +459,17 @@ try {
     btnGuardar.disabled = false;
     btnGuardar.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Cambios';
 }
-
 }
 
 /* CANCELAR EDICIÓN */
 
 function cancelarEdicion(){
 
-document.getElementById('profileName').textContent = userData.nombre || currentUser.displayName;
+document.getElementById('profileName').textContent     = userData.nombre || currentUser.displayName;
 document.getElementById('profileLocation').textContent = userData.localidad || '—';
-document.getElementById('profilePhone').textContent = userData.telefono || '—';
+document.getElementById('profilePhone').textContent    = userData.telefono || '—';
 document.getElementById('profileBloodType').textContent = userData.tipoSangre || '—';
 
-// Restaurar botón Editar
 const botonesDiv = document.querySelector('.d-grid.gap-2.mt-4');
 botonesDiv.innerHTML = `
     <button class="btn btn-outline-danger" onclick="enableEditMode()">
@@ -495,9 +479,7 @@ botonesDiv.innerHTML = `
         <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
     </button>
 `;
-
 }
-
 
 /* LOGOUT */
 

@@ -397,7 +397,7 @@
         if (user) {
             const rol = await verificarRolUsuario(user.uid);
             
-            // Cargar inscripciones del usuario
+            // Esperar a que terminen las inscripciones ANTES de continuar
             await cargarInscripcionesUsuario(user.uid);
             
             if (rol.esAdmin) {
@@ -434,7 +434,7 @@
         }
         
         // Cargar campañas después de actualizar auth
-        cargarCampanas();
+        await cargarCampanas();
     });
 
     // LOGOUT
