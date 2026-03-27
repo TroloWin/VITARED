@@ -379,13 +379,122 @@ container.innerHTML+=`
 function enableEditMode(){
 
 document.getElementById('profileName').innerHTML =
-`<input type="text" id="editNombre" class="form-control" value="${userData.nombre || ''}">`;
+`<input type="text" id="editNombre" class="form-control mb-1" value="${userData.nombre || ''}">`;
 
 document.getElementById('profileLocation').innerHTML =
-`<input type="text" id="editLocalidad" class="form-control" value="${userData.localidad || ''}">`;
+`<input type="text" id="editLocalidad" class="form-control mb-1" value="${userData.localidad || ''}">`;
 
 document.getElementById('profilePhone').innerHTML =
-`<input type="text" id="editTelefono" class="form-control" value="${userData.telefono || ''}">`;
+`<input type="text" id="editTelefono" class="form-control mb-1" value="${userData.telefono || ''}">`;
+
+document.getElementById('profileBloodType').innerHTML = `
+
+    <select id="editTipoSangre" class="form-select form-select-sm">
+
+      <option value="">Seleccione</option>
+
+      ${['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(t =>
+
+        `<option value="${t}" ${'${userData.tipoSangre === t ? "selected" : ""}'}>${t}</option>`
+
+      ).join('')}
+
+    </select>`;
+
+// Cambiar botón editar por botones Guardar y Cancelar
+document.querySelector('button[onclick="enableEditMode()"]').outerHTML = `
+    <button class="btn btn-success" id="btnGuardar" onclick="guardarCambios()">
+        <i class="fas fa-save me-2"></i>Guardar Cambios
+    </button>
+    <button class="btn btn-secondary" id="btnCancelar" onclick="cancelarEdicion()">
+        <i class="fas fa-times me-2"></i>Cancelar
+    </button>
+`;
+
+}
+
+/* GUARDAR CAMBIOS */
+
+async function guardarCambios(){
+
+const btnGuardar = document.getElementById('btnGuardar');
+btnGuardar.disabled = true;
+btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+
+const nuevoNombre   = document.getElementById('editNombre')?.value.trim();
+const nuevaLocalidad = document.getElementById('editLocalidad')?.value.trim();
+const nuevoTelefono = document.getElementById('editTelefono')?.value.trim();
+const nuevoTipoSangre = document.getElementById('editTipoSangre')?.value;
+
+  // Validar que ningún campo esté vacío
+  const errores = [];
+
+  if(!nuevoNombre) errores.push('• El nombre es obligatorio');
+
+  if(!nuevaLocalidad) errores.push('• La localidad es obligatoria');
+
+  if(!nuevoTelefono) errores.push('• El teléfono es obligatorio');
+
+  if(!nuevoTipoSangre) errores.push('• Debes seleccionar un tipo de sangre');
+
+  if(errores.length > 0){
+
+    alert('Por favor completa los siguientes campos:\n\n' + errores.join('\n'));
+    btnGuardar.disabled = false;
+    btnGuardar.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Cambios';
+    return;
+}
+
+try {
+    await userDocRef.update({
+        nombre:   nuevoNombre,
+        localidad: nuevaLocalidad,
+        telefono:  nuevoTelefono,
+        tipoSangre: nuevoTipoSangre
+    });
+
+    // Actualizar displayName en Auth
+    await currentUser.updateProfile({ displayName: nuevoNombre });
+
+    // Actualizar userData local
+    userData.nombre   = nuevoNombre;
+    userData.localidad = nuevaLocalidad;
+    userData.telefono  = nuevoTelefono;
+    userData.tipoSangre = nuevoTipoSangre;
+
+    alert('✅ Perfil actualizado correctamente');
+
+    // Volver a modo lectura
+    cancelarEdicion();
+
+} catch(error){
+    console.error('Error guardando:', error);
+    alert('❌ Error al guardar: ' + error.message);
+    btnGuardar.disabled = false;
+    btnGuardar.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Cambios';
+}
+
+}
+
+/* CANCELAR EDICIÓN */
+
+function cancelarEdicion(){
+
+document.getElementById('profileName').textContent = userData.nombre || currentUser.displayName;
+document.getElementById('profileLocation').textContent = userData.localidad || '—';
+document.getElementById('profilePhone').textContent = userData.telefono || '—';
+document.getElementById('profileBloodType').textContent = userData.tipoSangre || '—';
+
+// Restaurar botón Editar
+const botonesDiv = document.querySelector('.d-grid.gap-2.mt-4');
+botonesDiv.innerHTML = `
+    <button class="btn btn-outline-danger" onclick="enableEditMode()">
+        <i class="fas fa-edit me-2"></i>Editar Perfil
+    </button>
+    <button class="btn btn-danger" onclick="logout()">
+        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+    </button>
+`;
 
 }
 
