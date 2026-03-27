@@ -71,7 +71,17 @@
 
 <script src="../public/js/firebase-config.js"></script>
 <script>
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    const params = new URLSearchParams(window.location.search);
+    const redirectUrl = params.get("redirect") || "../index.html";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const linkRegistro = document.querySelector('a[href="register.html"]');
+        if (linkRegistro) {
+            linkRegistro.href = "register.html?redirect=" + redirectUrl;
+        }
+    });
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const email = document.getElementById('email').value;
@@ -99,7 +109,7 @@
             if (rol.esAdmin) {
                 window.location.href = '../admin/dashboard.html';
             } else {
-                window.location.href = '../index.html?logged=true';
+                window.location.href = '../' + redirectUrl;
             }
         } catch (error) {
             console.error("Error en login:", error);
