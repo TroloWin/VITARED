@@ -17,7 +17,7 @@
 </head>
 <body>
 
-<!-- 🔴 NAVBAR ORIGINAL (NO CAMBIADO) -->
+<!-- NAVBAR ORIGINAL -->
 <nav class="navbar navbar-expand-lg shadow-sm sticky-top">
 <div class="container py-2">
 
@@ -77,7 +77,6 @@
 <strong id="profileBloodType">—</strong>
 </div>
 
-<!-- 🔥 NUEVO -->
 <div class="info-item">
 <span>⚖️ Peso</span>
 <strong id="profilePeso">—</strong>
@@ -139,7 +138,37 @@
 .perfil-section{background:#f7f7f7;min-height:80vh;}
 .user-avatar-large{width:110px;height:110px;border-radius:50%;background:#8B0000;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:2.6rem;}
 .info-item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;}
+
+/* Estilo para el botón de ticket */
+.btn-ticket {
+    background: linear-gradient(90deg, #8B0000, #b30000);
+    border: none;
+    color: white;
+    font-size: 0.8rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    transition: 0.3s ease;
+}
+
+.btn-ticket:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(179,0,0,0.3);
+}
+
+/* Estilo para la tarjeta de inscripción */
+.inscripcion-card {
+    transition: 0.2s ease;
+    background: white;
+    border-left: 4px solid #8B0000;
+}
+
+.inscripcion-card:hover {
+    background: #fef5f5;
+}
 </style>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <script src="public/js/firebase-config.js"></script>
 
@@ -229,28 +258,262 @@ document.querySelector('.d-grid').innerHTML=`
 `;
 }
 
-/* INSCRIPCIONES */
+/* =========================================== */
+/* INSCRIPCIONES CON BOTÓN DE TICKET          */
+/* =========================================== */
 async function loadInscripciones(){
 
 const container=document.getElementById("inscripcionesContainer");
 const snapshot=await db.collection("inscripciones")
-.where("userId","==",currentUser.uid).get();
+.where("userId","==",currentUser.uid)
+.orderBy("fechaRegistro","desc")
+.get();
 
 if(snapshot.empty){
-container.innerHTML='<p class="text-muted">No tienes inscripciones</p>';
+container.innerHTML='<p class="text-muted">No tienes inscripciones activas</p>';
 return;
 }
 
 let html='';
-snapshot.forEach(doc=>{
+for (const doc of snapshot.docs){
 const i=doc.data();
+
+// Obtener datos de la campaña para mostrar ubicación
+let ubicacion = "No especificada";
+if(i.campanaId){
+    const campanaDoc = await db.collection("campanas").doc(i.campanaId).get();
+    if(campanaDoc.exists){
+        ubicacion = campanaDoc.data().lugar || "No especificada";
+    }
+}
+
 html+=`
-<div class="card mb-2 p-3 border">
-<strong>${i.campanaNombre}</strong><br>
-📅 ${i.fecha} | 📍 ${i.lugar}
-</div>`;
-});
+<div class="card mb-3 p-3 border inscripcion-card">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <strong class="text-danger">${i.campanaNombre || "Campaña sin nombre"}</strong><br>
+            <small class="text-muted">📅 ${i.fechaCampana || "Fecha no disponible"}</small><br>
+            <small class="text-muted">📍 ${ubicacion}</small><br>
+            <small class="text-muted">🎫 Ticket: <strong>${i.ticket || "No disponible"}</strong></small>
+        </div>
+        <button class="btn-ticket" onclick="imprimirTicket('${doc.id}')">
+            <i class="fas fa-print me-1"></i> Ticket
+        </button>
+    </div>
+</div>
+`;
+}
 container.innerHTML=html;
+}
+
+/* IMPRIMIR TICKET */
+async function imprimirTicket(inscripcionId){
+
+const doc = await db.collection("inscripciones").doc(inscripcionId).get();
+if(!doc.exists){
+    alert("No se encontró la inscripción");
+    return;
+}
+
+const inscripcion = doc.data();
+
+// Obtener datos completos de la campaña
+let ubicacion = "No especificada";
+let fechaCampana = inscripcion.fechaCampana || "Fecha no disponible";
+let nombreCampana = inscripcion.campanaNombre || "Campaña sin nombre";
+
+if(inscripcion.campanaId){
+    const campanaDoc = await db.collection("campanas").doc(inscripcion.campanaId).get();
+    if(campanaDoc.exists){
+        ubicacion = campanaDoc.data().lugar || "No especificada";
+        if(campanaDoc.data().fecha){
+            fechaCampana = campanaDoc.data().fecha;
+        }
+    }
+}
+
+// Crear ventana de impresión
+const ventana = window.open('', '_blank', 'width=600,height=800');
+
+ventana.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Ticket de Donación - VITARED</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .ticket {
+            max-width: 450px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        .ticket-header {
+            background: linear-gradient(135deg, #8B0000, #b30000);
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+        .ticket-header img {
+            width: 120px;
+            margin-bottom: 15px;
+        }
+        .ticket-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        .ticket-body {
+            padding: 25px;
+        }
+        .ticket-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #ddd;
+        }
+        .ticket-section h4 {
+            color: #8B0000;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+        .info-value {
+            font-weight: 500;
+            color: #333;
+        }
+        .ticket-footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #888;
+        }
+        .qr-placeholder {
+            text-align: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+        .btn-print {
+            display: block;
+            width: calc(100% - 40px);
+            margin: 20px;
+            padding: 12px;
+            background: #8B0000;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-print:hover {
+            background: #b30000;
+            transform: scale(1.02);
+        }
+        @media print {
+            .btn-print { display: none; }
+            body { background: white; padding: 0; }
+            .ticket { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="ticket-header">
+            <img src="public/images/vitared_logo.png" alt="VITARED">
+            <h2>Ticket de Donación</h2>
+            <p>Válido para tu cita de donación</p>
+        </div>
+        <div class="ticket-body">
+            <div class="ticket-section">
+                <h4>Información del Donante</h4>
+                <div class="info-row">
+                    <span class="info-label">Nombre:</span>
+                    <span class="info-value">${userData.nombre || currentUser.displayName || 'Usuario'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tipo de Sangre:</span>
+                    <span class="info-value">${userData.tipoSangre || 'No especificado'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Teléfono:</span>
+                    <span class="info-value">${userData.telefono || 'No registrado'}</span>
+                </div>
+            </div>
+            
+            <div class="ticket-section">
+                <h4>Campaña de Donación</h4>
+                <div class="info-row">
+                    <span class="info-label">Campaña:</span>
+                    <span class="info-value">${nombreCampana}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fecha:</span>
+                    <span class="info-value">${fechaCampana}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Ubicación:</span>
+                    <span class="info-value">${ubicacion}</span>
+                </div>
+            </div>
+            
+            <div class="ticket-section">
+                <h4>Ticket</h4>
+                <div class="info-row">
+                    <span class="info-label">Número de Ticket:</span>
+                    <span class="info-value"><strong>${inscripcion.ticket || 'No disponible'}</strong></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fecha de emisión:</span>
+                    <span class="info-value">${new Date().toLocaleDateString()}</span>
+                </div>
+            </div>
+            
+            <div class="qr-placeholder">
+                <i class="fas fa-heartbeat fa-2x" style="color:#8B0000"></i>
+                <p style="margin-top: 10px; font-size: 0.8rem;">Presenta este ticket el día de tu donación</p>
+            </div>
+        </div>
+        <div class="ticket-footer">
+            <p>VITARED - Donación de Sangre</p>
+            <p>Tu donación puede salvar hasta 3 vidas</p>
+            <p>¡Gracias por ser parte de esta causa!</p>
+        </div>
+        <button class="btn-print" onclick="window.print()">
+            <i class="fas fa-print"></i> Imprimir Ticket
+        </button>
+    </div>
+</body>
+</html>
+`);
+
+ventana.document.close();
+
 }
 
 /* DONACIONES */
@@ -258,21 +521,33 @@ async function loadDonaciones(){
 
 const container=document.getElementById("donacionesContainer");
 const snapshot=await db.collection("donaciones")
-.where("userId","==",currentUser.uid).get();
+.where("userId","==",currentUser.uid)
+.orderBy("fecha","desc")
+.get();
 
 if(snapshot.empty){
-container.innerHTML='<p class="text-muted">No hay donaciones</p>';
+container.innerHTML='<p class="text-muted">No hay donaciones registradas</p>';
 return;
 }
 
+let html='';
 snapshot.forEach(doc=>{
 const d=doc.data();
-container.innerHTML+=`
+const fecha = d.fecha?.toDate ? d.fecha.toDate().toLocaleDateString() : 'Fecha no disponible';
+html+=`
 <div class="card mb-2 p-3 border">
-Donación realizada<br>
-📅 ${d.fecha}
-</div>`;
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong class="text-danger">Donación realizada</strong><br>
+            📅 ${fecha}<br>
+            💉 ${d.cantidad || '450ml'}
+        </div>
+        <span class="badge bg-success">Completada</span>
+    </div>
+</div>
+`;
 });
+container.innerHTML=html;
 }
 
 /* LOGOUT */
